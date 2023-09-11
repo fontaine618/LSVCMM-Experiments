@@ -5,7 +5,7 @@ library(magrittr)
 
 # ==============================================================================
 # Setup batchtools registry
-DIR = "./experiment_fixed/registry/"
+DIR = "./experiment_cov_fixed/registry/"
 
 registry = loadRegistry(
   file.dir=DIR,
@@ -34,7 +34,7 @@ estimates %<>% left_join(parameters, by="job.id")
 estimation_errors %<>% left_join(parameters, by="job.id")
 classifications %<>% left_join(parameters, by="job.id")
 
-write.csv(estimates, file="./experiment_fixed/estimates.csv", row.names=F)
-write.csv(estimation_errors, file="./experiment_fixed/estimation_errors.csv", row.names=F)
-write.csv(classifications, file="./experiment_fixed/classifications.csv", row.names=F)
+write.csv(estimates, file="./experiment_cov_fixed/estimates.csv", row.names=F)
+write.csv(estimation_errors, file="./experiment_cov_fixed/estimation_errors.csv", row.names=F)
+write.csv(classifications, file="./experiment_cov_fixed/classifications.csv", row.names=F)
 # ------------------------------------------------------------------------------

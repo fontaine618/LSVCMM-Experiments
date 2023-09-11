@@ -5,7 +5,7 @@ library(magrittr)
 
 # ==============================================================================
 # Setup batchtools registry
-DIR = "./experiment_fixed/"
+DIR = "./experiment_cov_fixed/"
 if(!dir.exists(DIR)) dir.create(DIR, recursive=T)
 registry = makeExperimentRegistry(
   file.dir=paste0(DIR, "registry/"),
@@ -40,13 +40,20 @@ instance = synthetic(NULL, NULL)
 # ==============================================================================
 # Setup algorithms
 source("./algorithms/lsvcmm.R")
-source("./algorithms/spfda.R")
 addAlgorithm(
-  name="LSVCMM",
+  name="Longitudinal.h_fixed.l_selected",
   fun=lsvcmm_wrapper
 )
 addAlgorithm(
-  name="LSVCMM.Independent",
+  name="Longitudinal.h_fixed.l_fixed",
+  fun=lsvcmm_wrapper
+)
+addAlgorithm(
+  name="Independent.h_fixed.l_selected",
+  fun=lsvcmm_wrapper
+)
+addAlgorithm(
+  name="Independent.h_fixed.l_fixed",
   fun=lsvcmm_wrapper
 )
 # ------------------------------------------------------------------------------
@@ -61,15 +68,17 @@ problems = list(
   `synthetic`=CJ(
     seed=seq(n_reps),
     observation_variance=1.,
-    random_effect_ar1_correlation=1.,
+    random_effect_ar1_correlation=c(0., 0.1, 0.2, 0.4, 0.6, 0.8, 1.),
     random_effect_variance_ratio=2.,
     prop_observed=1.
   )
 )
 
 algorithms = list(
-  `LSVCMM.Independent`=data.table(cross_sectional=F, independent=T, penalty.adaptive=1.),
-  `LSVCMM.Cross-sectional`=data.table(cross_sectional=T, independent=T, penalty.adaptive=1.),
+  `Longitudinal.h_fixed.l_selected`=data.table(cross_sectional=F, independent=F, penalty.adaptive=1., kernel.scale=0.2),
+  `Longitudinal.h_fixed.l_fixed`=data.table(cross_sectional=F, independent=F, penalty.adaptive=1., kernel.scale=0.2, penalty.lambda=10.),
+  `Independent.h_fixed.l_selected`=data.table(cross_sectional=F, independent=T, penalty.adaptive=1., kernel.scale=0.2),
+  `Independent.h_fixed.l_fixed`=data.table(cross_sectional=F, independent=T, penalty.adaptive=1., kernel.scale=0.2, penalty.lambda=10.)
 )
 
 addExperiments(
@@ -84,20 +93,8 @@ addExperiments(
 
 # ==============================================================================
 # Run
+registry$cluster.functions = makeClusterFunctionsSocket(ncpus = 10)
 summarizeExperiments()
+submitJobs(resources=list(walltime=1000))
 getStatus()
-
-resources = list(
-  account="stats_dept1",
-  partition="standard",
-  memory="6g", # this is per cpu
-  ncpus=1,
-  walltime="60:00",
-  chunks.as.arrayjobs=FALSE,
-  job_name="LSVCMM_fixed"
-)
-
-chunk_df = data.table(job.id=1:2800, chunk=1:100)
-head(chunk_df)
-submitJobs(chunk_df, resources)
 # ------------------------------------------------------------------------------
