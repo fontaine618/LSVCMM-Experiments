@@ -16,3 +16,14 @@ Experiments accompnying the LSVCMM paper
 
 - For the comparison with fixed tuning parms, I don't think lambda are really comparable
 - I did the same by fixing the scale, but not the kernel only
+
+
+- drop CS in 4th experiment
+- estimation error, acc, tpr power
+- time points, function
+- compare with fixed tuning values
+
+- tvreg
+- new setting for sanity cehck with other function
+- look into why acc drop for 2nd experiment at last x value
+

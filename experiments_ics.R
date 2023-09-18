@@ -10,59 +10,49 @@ experiments = list(
     xvar="observation_variance",
     xname="Total variance",
     col=1
-  ),
-  missing=list(
-    dir="missing",
-    name="Partially observed trajectories",
-    xvar="prop_observed",
-    xname="Proportion observed",
-    col=2
-  ),
-  re=list(
-    dir="re",
-    name="Random effect importance",
-    xvar="random_effect_variance_ratio",
-    xname="Random effect variance ratio",
-    col=3
-  ),
-  cov=list(
-    dir="cov",
-    name="Covariance misspecification",
-    xvar="random_effect_ar1_correlation",
-    xname="AR(1) correlation",
-    col=4
-  )
+  )#,
+  # missing=list(
+  #   dir="missing",
+  #   name="Partially observed trajectories",
+  #   xvar="prop_observed",
+  #   xname="Proportion observed",
+  #   col=2
+  # ),
+  # re=list(
+  #   dir="re",
+  #   name="Random effect importance",
+  #   xvar="random_effect_variance_ratio",
+  #   xname="Random effect variance ratio",
+  #   col=3
+  # ),
+  # cov=list(
+  #   dir="cov",
+  #   name="Covariance misspecification",
+  #   xvar="random_effect_ar1_correlation",
+  #   xname="AR(1) correlation",
+  #   col=4
+  # )
 )
 
 gs = list()
 
 for(exp in experiments){
-  estimates = read.csv(paste0("experiment_", exp$dir, "/estimates.csv"))
-  estimation_errors = read.csv(paste0("experiment_", exp$dir, "/estimation_errors.csv"))
-  classifications = read.csv(paste0("experiment_", exp$dir, "/classifications.csv"))
+  icresults = read.csv(paste0("experiment_", exp$dir, "/icresults.csv"))
+  parameters = read.csv(paste0("experiment_", exp$dir, "/parameters.csv"))
 
+  icresultswithpars = icresults %>%
+    left_join(parameters, by="job.id")
 
+  icresultswithpars %<>% filter(algorithm=="LSVCMM")
 
-
-
-
-
-
-
-
-
-
-
-
-
-  gby1 = c("algorithm", "seed", exp$xvar)
-  gby2 = c("algorithm", exp$xvar)
+  gby1 = c("ICname", "seed", exp$xvar, "df", "n", "ICtype")
+  gby2 = c("ICname", exp$xvar, "df", "n", "ICtype")
 
   # MAE
-  df = estimation_errors %>%
+  df = icresultswithpars %>%
     # filter(time>=0.5) %>%
     group_by(across(all_of(gby1))) %>%
-    summarise(mae=mean(abs(group_difference))) %>%
+    summarise(mae=mean(abs(error))) %>%
     group_by(across(all_of(gby2))) %>%
     summarise(
       mean=mean(mae), sd=sd(mae), se=sd(mae)/sqrt(n())
@@ -71,19 +61,19 @@ for(exp in experiments){
     theme_minimal() +
     geom_line(
       data=df,
-      mapping=aes(x=!!sym(exp$xvar), y=mean, color=algorithm, linetype=algorithm),
+      mapping=aes(x=!!sym(exp$xvar), y=mean, color=ICtype, linetype=n, group=ICname),
     ) +
     geom_point(
       data=df,
-      mapping=aes(x=!!sym(exp$xvar), y=mean, color=algorithm, shape=algorithm),
+      mapping=aes(x=!!sym(exp$xvar), y=mean, color=ICtype, shape=df, group=ICname),
     ) +
     geom_ribbon(
       data=df,
-      mapping=aes(x=!!sym(exp$xvar), ymin=mean-se, ymax=mean+se, fill=algorithm),
+      mapping=aes(x=!!sym(exp$xvar), ymin=mean-se, ymax=mean+se, fill=ICtype, group=ICname),
       alpha=0.2
     ) +
     xlab(exp$xname) + ylab("Estimation MAE") +
-    labs(color="Algorithm", linetype="Algorithm", shape="Algorithm", fill="Algorithm") +
+    labs(color="IC Type", linetype="N", shape="df", fill="IC Type") +
     theme(
       legend.position="none",
       text=element_text(family="Helvetica"),
@@ -101,10 +91,10 @@ for(exp in experiments){
   gs[[paste0(exp$dir, "mae")]] = g
 
   # MAE Null
-  df = estimation_errors %>%
+  df = icresultswithpars %>%
     filter(time<0.5) %>%
     group_by(across(all_of(gby1))) %>%
-    summarise(mae=mean(abs(group_difference))) %>%
+    summarise(mae=mean(abs(error))) %>%
     group_by(across(all_of(gby2))) %>%
     summarise(
       mean=mean(mae), sd=sd(mae), se=sd(mae)/sqrt(n())
@@ -113,19 +103,19 @@ for(exp in experiments){
     theme_minimal() +
     geom_line(
       data=df,
-      mapping=aes(x=!!sym(exp$xvar), y=mean, color=algorithm, linetype=algorithm),
+      mapping=aes(x=!!sym(exp$xvar), y=mean, color=ICtype, linetype=n, group=ICname),
     ) +
     geom_point(
       data=df,
-      mapping=aes(x=!!sym(exp$xvar), y=mean, color=algorithm, shape=algorithm),
+      mapping=aes(x=!!sym(exp$xvar), y=mean, color=ICtype, shape=df, group=ICname),
     ) +
     geom_ribbon(
       data=df,
-      mapping=aes(x=!!sym(exp$xvar), ymin=mean-se, ymax=mean+se, fill=algorithm),
+      mapping=aes(x=!!sym(exp$xvar), ymin=mean-se, ymax=mean+se, fill=ICtype, group=ICname),
       alpha=0.2
     ) +
     xlab(exp$xname) + ylab("Estimation MAE (null)") +
-    labs(color="Algorithm", linetype="Algorithm", shape="Algorithm", fill="Algorithm") +
+    labs(color="IC Type", linetype="N", shape="df", fill="IC Type") +
     theme(
       legend.position="none",
       text=element_text(family="Helvetica"),
@@ -142,10 +132,10 @@ for(exp in experiments){
   gs[[paste0(exp$dir, "mae_null")]] = g
 
   # MAE Non-null
-  df = estimation_errors %>%
+  df = icresultswithpars %>%
     filter(time>=0.5) %>%
     group_by(across(all_of(gby1))) %>%
-    summarise(mae=mean(abs(group_difference))) %>%
+    summarise(mae=mean(abs(error))) %>%
     group_by(across(all_of(gby2))) %>%
     summarise(
       mean=mean(mae), sd=sd(mae), se=sd(mae)/sqrt(n())
@@ -154,19 +144,19 @@ for(exp in experiments){
     theme_minimal() +
     geom_line(
       data=df,
-      mapping=aes(x=!!sym(exp$xvar), y=mean, color=algorithm, linetype=algorithm),
+      mapping=aes(x=!!sym(exp$xvar), y=mean, color=ICtype, linetype=n, group=ICname),
     ) +
     geom_point(
       data=df,
-      mapping=aes(x=!!sym(exp$xvar), y=mean, color=algorithm, shape=algorithm),
+      mapping=aes(x=!!sym(exp$xvar), y=mean, color=ICtype, shape=df, group=ICname),
     ) +
     geom_ribbon(
       data=df,
-      mapping=aes(x=!!sym(exp$xvar), ymin=mean-se, ymax=mean+se, fill=algorithm),
+      mapping=aes(x=!!sym(exp$xvar), ymin=mean-se, ymax=mean+se, fill=ICtype, group=ICname),
       alpha=0.2
     ) +
     xlab(exp$xname) + ylab("Estimation MAE (non-null)") +
-    labs(color="Algorithm", linetype="Algorithm", shape="Algorithm", fill="Algorithm") +
+    labs(color="IC Type", linetype="N", shape="df", fill="IC Type") +
     theme(
       legend.position="none",
       text=element_text(family="Helvetica"),
@@ -184,13 +174,13 @@ for(exp in experiments){
 
   # Classification metrics
 
-  dfall = classifications %>%
+  dfall = icresultswithpars %>%
     group_by(across(all_of(gby1))) %>%
     summarise(
-      tn=sum(group_difference=="TN"),
-      fp=sum(group_difference=="FP"),
-      fn=sum(group_difference=="FN"),
-      tp=sum(group_difference=="TP")
+      tn=sum(classification=="TN"),
+      fp=sum(classification=="FP"),
+      fn=sum(classification=="FN"),
+      tp=sum(classification=="TP")
     ) %>%
     mutate(
       ppv=(tp+fp),
@@ -209,19 +199,19 @@ for(exp in experiments){
     theme_minimal() +
     geom_line(
       data=df,
-      mapping=aes(x=!!sym(exp$xvar), y=mean, color=algorithm, linetype=algorithm),
+      mapping=aes(x=!!sym(exp$xvar), y=mean, color=ICtype, linetype=n, group=ICname),
     ) +
     geom_point(
       data=df,
-      mapping=aes(x=!!sym(exp$xvar), y=mean, color=algorithm, shape=algorithm),
+      mapping=aes(x=!!sym(exp$xvar), y=mean, color=ICtype, shape=df, group=ICname),
     ) +
     geom_ribbon(
       data=df,
-      mapping=aes(x=!!sym(exp$xvar), ymin=mean-se, ymax=mean+se, fill=algorithm),
+      mapping=aes(x=!!sym(exp$xvar), ymin=mean-se, ymax=mean+se, fill=ICtype, group=ICname),
       alpha=0.2
     ) +
     xlab(exp$xname) + ylab("N selected") +
-    labs(color="Algorithm", linetype="Algorithm", shape="Algorithm", fill="Algorithm") +
+    labs(color="IC Type", linetype="N", shape="df", fill="IC Type") +
     theme(
       legend.position="none",
       text=element_text(family="Helvetica"),
@@ -229,7 +219,7 @@ for(exp in experiments){
       axis.ticks.x=element_blank(),
       axis.title.x=element_blank(),
     ) +
-    ylim(0, 8)
+    ylim(0, 10)
   if(exp$col>1) g = g + theme(
     axis.text.y=element_blank(),
     axis.ticks.y=element_blank(),
@@ -247,19 +237,19 @@ for(exp in experiments){
     theme_minimal() +
     geom_line(
       data=df,
-      mapping=aes(x=!!sym(exp$xvar), y=mean, color=algorithm, linetype=algorithm),
+      mapping=aes(x=!!sym(exp$xvar), y=mean, color=ICtype, linetype=n, group=ICname),
     ) +
     geom_point(
       data=df,
-      mapping=aes(x=!!sym(exp$xvar), y=mean, color=algorithm, shape=algorithm),
+      mapping=aes(x=!!sym(exp$xvar), y=mean, color=ICtype, shape=df, group=ICname),
     ) +
     geom_ribbon(
       data=df,
-      mapping=aes(x=!!sym(exp$xvar), ymin=mean-se, ymax=mean+se, fill=algorithm),
+      mapping=aes(x=!!sym(exp$xvar), ymin=mean-se, ymax=mean+se, fill=ICtype, group=ICname),
       alpha=0.2
     ) +
     xlab(exp$xname) + ylab("Accuracy") +
-    labs(color="Algorithm", linetype="Algorithm", shape="Algorithm", fill="Algorithm") +
+    labs(color="IC Type", linetype="N", shape="df", fill="IC Type") +
     theme(
       legend.position="none",
       text=element_text(family="Helvetica"),
@@ -285,19 +275,19 @@ for(exp in experiments){
     theme_minimal() +
     geom_line(
       data=df,
-      mapping=aes(x=!!sym(exp$xvar), y=mean, color=algorithm, linetype=algorithm),
+      mapping=aes(x=!!sym(exp$xvar), y=mean, color=ICtype, linetype=n, group=ICname),
     ) +
     geom_point(
       data=df,
-      mapping=aes(x=!!sym(exp$xvar), y=mean, color=algorithm, shape=algorithm),
+      mapping=aes(x=!!sym(exp$xvar), y=mean, color=ICtype, shape=df, group=ICname),
     ) +
     geom_ribbon(
       data=df,
-      mapping=aes(x=!!sym(exp$xvar), ymin=mean-se, ymax=mean+se, fill=algorithm),
+      mapping=aes(x=!!sym(exp$xvar), ymin=mean-se, ymax=mean+se, fill=ICtype, group=ICname),
       alpha=0.2
     ) +
     xlab(exp$xname) + ylab("TPR (Power)") +
-    labs(color="Algorithm", linetype="Algorithm", shape="Algorithm", fill="Algorithm") +
+    labs(color="IC Type", linetype="N", shape="df", fill="IC Type") +
     theme(
       legend.position="none",
       text=element_text(family="Helvetica"),
@@ -323,19 +313,19 @@ for(exp in experiments){
     theme_minimal() +
     geom_line(
       data=df,
-      mapping=aes(x=!!sym(exp$xvar), y=mean, color=algorithm, linetype=algorithm),
+      mapping=aes(x=!!sym(exp$xvar), y=mean, color=ICtype, linetype=n, group=ICname),
     ) +
     geom_point(
       data=df,
-      mapping=aes(x=!!sym(exp$xvar), y=mean, color=algorithm, shape=algorithm),
+      mapping=aes(x=!!sym(exp$xvar), y=mean, color=ICtype, shape=df, group=ICname),
     ) +
     geom_ribbon(
       data=df,
-      mapping=aes(x=!!sym(exp$xvar), ymin=mean-se, ymax=mean+se, fill=algorithm),
+      mapping=aes(x=!!sym(exp$xvar), ymin=mean-se, ymax=mean+se, fill=ICtype, group=ICname),
       alpha=0.2
     ) +
     xlab(exp$xname) + ylab("FDR") +
-    labs(color="Algorithm", linetype="Algorithm", shape="Algorithm", fill="Algorithm") +
+    labs(color="IC Type", linetype="N", shape="df", fill="IC Type") +
     theme(
       legend.position="none",
       text=element_text(family="Helvetica"),
@@ -343,7 +333,7 @@ for(exp in experiments){
       # axis.ticks.x=element_blank(),
       # axis.title.x=element_blank(),
     ) +
-    ylim(0, 0.3)
+    ylim(0, 0.4)
   if(exp$col>1) g = g + theme(
     axis.text.y=element_blank(),
     axis.ticks.y=element_blank(),
@@ -357,31 +347,32 @@ gtmp = ggplot() +
   theme_minimal() +
   geom_line(
     data=df,
-    mapping=aes(x=!!sym(exp$xvar), y=mean, color=algorithm, linetype=algorithm),
+    mapping=aes(x=!!sym(exp$xvar), y=mean, color=ICtype, linetype=n, group=ICname),
   ) +
   geom_point(
     data=df,
-    mapping=aes(x=!!sym(exp$xvar), y=mean, color=algorithm, shape=algorithm),
+    mapping=aes(x=!!sym(exp$xvar), y=mean, color=ICtype, shape=df, group=ICname),
   ) +
   geom_ribbon(
     data=df,
-    mapping=aes(x=!!sym(exp$xvar), ymin=mean-se, ymax=mean+se, fill=algorithm),
+    mapping=aes(x=!!sym(exp$xvar), ymin=mean-se, ymax=mean+se, fill=ICtype, group=ICname),
     alpha=0.2
   ) +
   xlab(exp$xname) + ylab("FDR") +
-  labs(color="Algorithm", linetype="Algorithm", shape="Algorithm", fill="Algorithm") +
+  labs(color="IC Type", linetype="N", shape="df", fill="IC Type") +
   theme(legend.direction="horizontal")
 glegend = cowplot::get_legend(gtmp)
 glegend = ggpubr::as_ggplot(glegend)
 
+ne = length(experiments)
 g = cowplot::plot_grid(
   plotlist=gs,
-  ncol=4, nrow=7,
+  ncol=ne, nrow=7,
   byrow=F,
   align="vh", axis="tblr"
 )
 
-gg = cowplot::plot_grid(glegend, g, glegend, ncol=1, nrow=3, rel_heights=c(1, 20, 1))
+gg = cowplot::plot_grid(glegend, g, glegend, ncol=1, nrow=3, rel_heights=c(3, 20, 3))
 
-ggsave("./experiment_results.pdf", gg, width=12, height=20)
+ggsave("./experiment_icresults.pdf", gg, width=ne*3+1, height=20)
 
