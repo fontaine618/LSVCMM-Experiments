@@ -3,12 +3,16 @@ library(data.table)
 library(tidyverse)
 library(magrittr)
 
+
+
 # ==============================================================================
 # Setup batchtools registry
-DIR = "./experiment_missing/"
-if(!dir.exists(DIR)) dir.create(DIR, recursive=T)
+name = "experiment_missing"
+DIR = paste0("./", name, "/")
+DIR_REGISTRY = paste0("./", name, "/registry/")
+if(!dir.exists(DIR_REGISTRY)) dir.create(DIR_REGISTRY, recursive=T)
 registry = makeExperimentRegistry(
-  file.dir=paste0(DIR, "registry/"),
+  file.dir=DIR_REGISTRY,
   seed=1,
   packages=c("dplyr", "magrittr", "LSVCMM", "spfda")
 )
@@ -76,10 +80,10 @@ problems = list(
 )
 
 algorithms = list(
-  `LSVCMM`=data.table(cross_sectional=F, independent=F, penalty.adaptive=1.),
-  `LSVCMM.Independent`=data.table(cross_sectional=F, independent=T, penalty.adaptive=1.),
+  `LSVCMM`=data.table(cross_sectional=F, independent=F, penalty.adaptive=1., kernel.scale=0.15),
+  `LSVCMM.Independent`=data.table(cross_sectional=F, independent=T, penalty.adaptive=1., kernel.scale=0.15),
   `LSVCMM.Cross-sectional`=data.table(cross_sectional=T, independent=T, penalty.adaptive=1.),
-  `SPFDA`=data.table()
+  `SPFDA`=data.table(K=10)
 )
 
 addExperiments(
@@ -102,12 +106,60 @@ resources = list(
   partition="standard",
   memory="6g", # this is per cpu
   ncpus=1,
-  walltime="60:00",
+  walltime="20:00",
   chunks.as.arrayjobs=FALSE,
-  job_name="LSVCMM_missing"
+  job_name=name
 )
 
 chunk_df = data.table(job.id=1:2800, chunk=1:100)
 head(chunk_df)
 submitJobs(chunk_df, resources)
+# ------------------------------------------------------------------------------
+
+
+
+
+# ==============================================================================
+# Setup batchtools registry
+registry = loadRegistry(
+  file.dir=DIR_REGISTRY,
+  writeable=T
+)
+# ------------------------------------------------------------------------------
+
+
+
+# ==============================================================================
+# Gather results
+DIR_RESULTS = paste0("./", name, "/results/")
+if(!dir.exists(DIR_RESULTS)) dir.create(DIR_RESULTS, recursive=T)
+
+estimate = function(result) result$estimate
+estimates = reduceResultsList(fun = estimate) %>% bind_rows(.id="job.id")
+estimates %<>% mutate(job.id = as.numeric(job.id))
+
+estimation_error = function(result) result$estimation_error
+estimation_errors = reduceResultsList(fun = estimation_error) %>% bind_rows(.id="job.id")
+estimation_errors %<>% mutate(job.id = as.numeric(job.id))
+
+classification = function(result) result$classification_error
+classifications = reduceResultsList(fun = classification) %>% bind_rows(.id="job.id")
+classifications %<>% mutate(job.id = as.numeric(job.id))
+
+parameters = getJobPars() %>% unwrap()
+parameters %<>% mutate(job.id = as.numeric(job.id))
+
+setting = function(result){
+  i = which.min(result$fit$results[["ebich"]])
+  res = result$fit$results[i, ]
+  return(res)
+}
+settings = reduceResultsList(fun = setting) %>% bind_rows(.id="job.id")
+settings %<>% mutate(job.id = as.numeric(job.id))
+
+write.csv(parameters, file=paste0(DIR_RESULTS, "parameters.csv"), row.names=F)
+write.csv(estimates, file=paste0(DIR_RESULTS, "estimates.csv"), row.names=F)
+write.csv(estimation_errors, file=paste0(DIR_RESULTS, "estimation_errors.csv"), row.names=F)
+write.csv(classifications, file=paste0(DIR_RESULTS, "classifications.csv"), row.names=F)
+write.csv(settings, file=paste0(DIR_RESULTS, "settings.csv"), row.names=F)
 # ------------------------------------------------------------------------------

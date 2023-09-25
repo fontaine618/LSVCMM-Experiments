@@ -10,13 +10,13 @@ experiments = list(
   #   xname="Total variance",
   #   col=1
   # ),
-  # missing=list(
-  #   dir="missing",
-  #   name="Partially observed trajectories",
-  #   xvar="prop_observed",
-  #   xname="Proportion observed",
-  #   col=2
-  # ),
+  missing=list(
+    dir="missing",
+    name="Partially observed trajectories",
+    xvar="prop_observed",
+    xname="Proportion observed",
+    col=2
+  ),
   # re=list(
   #   dir="re",
   #   name="Random effect importance",
@@ -24,13 +24,13 @@ experiments = list(
   #   xname="Random effect variance ratio",
   #   col=3
   # ),
-  cov=list(
-    dir="cov_fixed",
-    name="Covariance misspecification",
-    xvar="random_effect_ar1_correlation",
-    xname="AR(1) correlation",
-    col=1
-  )
+  # cov=list(
+  #   dir="cov_fixed",
+  #   name="Covariance misspecification",
+  #   xvar="random_effect_ar1_correlation",
+  #   xname="AR(1) correlation",
+  #   col=1
+  # )
 )
 
 gs = list()

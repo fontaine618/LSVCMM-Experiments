@@ -5,7 +5,7 @@ library(magrittr)
 
 # ==============================================================================
 # Setup batchtools registry
-DIR = "./experiment_missing_sine/"
+DIR = "./experiment_re_sine/"
 if(!dir.exists(DIR)) dir.create(DIR, recursive=T)
 registry = makeExperimentRegistry(
   file.dir=paste0(DIR, "registry/"),
@@ -70,8 +70,8 @@ problems = list(
     seed=seq(n_reps),
     observation_variance=1.,
     random_effect_ar1_correlation=1.,
-    random_effect_variance_ratio=2.,
-    prop_observed=c(0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5),
+    random_effect_variance_ratio=c(0., 0.2, 0.5, 1., 1.5, 2., 4.),
+    prop_observed=1.,
     n_timepoints=c(31),
     grpdiff_function=c("sine")
   )
@@ -106,7 +106,7 @@ resources = list(
   ncpus=1,
   walltime="2:00:00",
   chunks.as.arrayjobs=FALSE,
-  job_name="LSVCMM_missing_sine"
+  job_name="LSVCMM_re_sine"
 )
 
 chunk_df = data.table(job.id=1:2800, chunk=1:100)

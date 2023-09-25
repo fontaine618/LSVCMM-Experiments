@@ -1,7 +1,7 @@
 spfda_wrapper = function(
     data, job, instance,
     independent=F,
-    oracle=F
+    oracle=F, K=NULL
 ){
 
   t0 = proc.time()
@@ -24,7 +24,7 @@ spfda_wrapper = function(
 
   alphas = c(0.5)
   lambdas = 10^seq(log10(1.), log10(100), length.out = 100)
-  Ks = seq(5, 13)
+  if(is.null(K)) Ks = seq(5, 13) else Ks = c(K)
   all_params = expand.grid(lambdas, alphas, Ks)
   names(all_params) = c("lambda", "alpha", "K")
 

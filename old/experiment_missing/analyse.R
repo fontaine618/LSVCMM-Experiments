@@ -34,7 +34,18 @@ estimates %<>% left_join(parameters, by="job.id")
 estimation_errors %<>% left_join(parameters, by="job.id")
 classifications %<>% left_join(parameters, by="job.id")
 
+
 write.csv(estimates, file="./experiment_missing/estimates.csv", row.names=F)
 write.csv(estimation_errors, file="./experiment_missing/estimation_errors.csv", row.names=F)
 write.csv(classifications, file="./experiment_missing/classifications.csv", row.names=F)
+
+setting = function(result){
+  i = which.min(result$fit$results[["ebich"]])
+  res = result$fit$results[i, ]
+  return(res)
+}
+settings = reduceResultsList(fun = setting) %>% bind_rows(.id="job.id")
+settings %<>% mutate(job.id = as.numeric(job.id))
+settings %<>% left_join(parameters, by="job.id")
+write.csv(settings, file="./experiment_missing/settings.csv", row.names=F)
 # ------------------------------------------------------------------------------
