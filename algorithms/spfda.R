@@ -50,12 +50,12 @@ spfda_wrapper = function(
 
   BICfd = cbind(all_params, BIC=unlist(BICs))
   parms = BICfd[which.min(BICfd$BIC),  ]
-  ggplot() +
-    geom_line(
-      data=BICfd,
-      mapping=aes(x=lambda, color=as.factor(alpha), group=paste0(K, alpha), y=BIC, linetype=as.factor(K))
-      ) +
-    scale_x_log10()
+  # ggplot() +
+  #   geom_line(
+  #     data=BICfd,
+  #     mapping=aes(x=lambda, color=as.factor(alpha), group=paste0(K, alpha), y=BIC, linetype=as.factor(K))
+  #     ) +
+  #   scale_x_log10()
 
   out = spfda::spfda(
     Y=Y,
