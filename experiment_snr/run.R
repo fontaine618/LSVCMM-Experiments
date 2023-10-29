@@ -7,7 +7,7 @@ library(magrittr)
 
 # ==============================================================================
 # Setup batchtools registry
-name = "experiment_missing"
+name = "experiment_snr"
 DIR = paste0("./", name, "/")
 DIR_REGISTRY = paste0("./", name, "/registry/")
 if(!dir.exists(DIR)) dir.create(DIR, recursive=T)
@@ -80,11 +80,11 @@ n_reps=100
 problems = list(
   `synthetic`=CJ(
     n_subjects=100,
-    prop_observed=c(0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.),
+    prop_observed=0.7,
     observation_variance=1.,
     random_effect_ar1_correlation=1.,
     random_effect_variance_ratio=2.,
-    effect_size=1.,
+    effect_size=c(0., 0.25, 0.5, 0.75, 1., 1.5, 2., 3.),
     grpdiff_function=c("sigmoid", "sine"),
     missingness="contiguous",
     seed=seq(n_reps)
@@ -125,7 +125,7 @@ resources = list(
   job_name=name
 )
 
-chunk_df = data.table(job.id=1:9600, chunk=1:50)
+chunk_df = data.table(job.id=4801:9600, chunk=1:50)
 head(chunk_df)
 submitJobs(chunk_df, resources)
 # ------------------------------------------------------------------------------

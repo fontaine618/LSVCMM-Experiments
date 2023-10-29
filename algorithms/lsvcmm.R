@@ -4,17 +4,19 @@ lsvcmm_wrapper = function(
   cross_sectional=F,
   independent=F,
   kernel.name="gaussian",
+  kernel.scale=NULL,
+  kernel.rescale_boundary=T,
   penalty.alpha=1.,
   penalty.adaptive=1.,
   penalty.lambda=NULL,
-  kernel.scale=NULL
+  penalty.name="adaptive_sparse_group_lasso"
 ){
   t0 = proc.time()
   df = instance$data
   if(cross_sectional){
-    k_args = list(name="epa", scale=min(diff(sort(instance$estimated_time)))/2, n_scale=1L)
+    k_args = list(name="epa", scale=min(diff(sort(instance$estimated_time)))/2, n_scale=1L, rescale_boundary=kernel.rescale_boundary)
   }else{
-    k_args = list(name=kernel.name, scale=kernel.scale, n_scale=1L)
+    k_args = list(name=kernel.name, scale=kernel.scale, n_scale=1L, rescale_boundary=kernel.rescale_boundary)
   }
   if(independent){
     wc_args = list(name="independent")
@@ -33,8 +35,10 @@ lsvcmm_wrapper = function(
     estimated_time=instance$estimated_time,
     kernel=k_args,
     working_covariance=wc_args,
-    penalty=list(adaptive=penalty.adaptive, alpha=penalty.alpha, penalize_intercept=T,
-                 lambda=penalty.lambda, nlambda=ifelse(is.null(penalty.lambda), 100L, 1L)),
+    penalty=list(name=penalty.name,
+      adaptive=penalty.adaptive, alpha=penalty.alpha, penalize_intercept=T,
+      lambda=penalty.lambda, nlambda=ifelse(is.null(penalty.lambda), 100L, 1L)
+      ),
     return_models=F
   )
 

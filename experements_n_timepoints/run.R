@@ -2,12 +2,12 @@ library(batchtools)
 library(data.table)
 library(tidyverse)
 library(magrittr)
-
+devtools::install_github("fontaine618/LSVCMM")
 
 
 # ==============================================================================
 # Setup batchtools registry
-name = "experiment_missing"
+name = "experiment_n_timepoints"
 DIR = paste0("./", name, "/")
 DIR_REGISTRY = paste0("./", name, "/registry/")
 if(!dir.exists(DIR)) dir.create(DIR, recursive=T)
@@ -50,15 +50,7 @@ addAlgorithm(
   fun=lsvcmm_wrapper
 )
 addAlgorithm(
-  name="LSVCMM0.2",
-  fun=lsvcmm_wrapper
-)
-addAlgorithm(
   name="LSVCMM.Independent",
-  fun=lsvcmm_wrapper
-)
-addAlgorithm(
-  name="LSVCMM.Independent0.2",
   fun=lsvcmm_wrapper
 )
 addAlgorithm(
@@ -80,24 +72,23 @@ n_reps=100
 problems = list(
   `synthetic`=CJ(
     n_subjects=100,
-    prop_observed=c(0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.),
+    prop_observed=c(0.7),
     observation_variance=1.,
     random_effect_ar1_correlation=1.,
-    random_effect_variance_ratio=2.,
+    random_effect_variance_ratio=0.5,
     effect_size=1.,
-    grpdiff_function=c("sigmoid", "sine"),
-    missingness="contiguous",
+    n_timepoints=c(6, 10, 15, 20, 25, 30, 40, 50),
+    grpdiff_function=c("sigmoid"),
+    missingness="uniform",
     seed=seq(n_reps)
   )
 )
 
 algorithms = list(
-  `LSVCMM`=data.table(cross_sectional=F, independent=F, penalty.adaptive=1.),
-  `LSVCMM0.2`=data.table(cross_sectional=F, independent=F, penalty.adaptive=1., kernel.scale=0.2),
-  `LSVCMM.Independent`=data.table(cross_sectional=F, independent=T, penalty.adaptive=1.),
-  `LSVCMM.Independent0.2`=data.table(cross_sectional=F, independent=T, penalty.adaptive=1., kernel.scale=0.2),
-  `LSVCMM.Cross-sectional`=data.table(cross_sectional=T, independent=T, penalty.adaptive=1.),
-  `SPFDA`=data.table(K=13)
+  `LSVCMM`=data.table(cross_sectional=F, independent=F, penalty.adaptive=0.5, kernel.scale=0.2),
+  `LSVCMM.Independent`=data.table(cross_sectional=F, independent=T, penalty.adaptive=0.5, kernel.scale=0.2),
+  `LSVCMM.Cross-sectional`=data.table(cross_sectional=T, independent=T, penalty.adaptive=0.5),
+  `SPFDA`=data.table()
 )
 
 addExperiments(
@@ -118,14 +109,14 @@ getStatus()
 resources = list(
   account="stats_dept1",
   partition="standard",
-  memory="6g", # this is per cpu
+  memory="10g", # this is per cpu
   ncpus=1,
-  walltime="30:00",
+  walltime="3:00:00",
   chunks.as.arrayjobs=FALSE,
   job_name=name
 )
-
-chunk_df = data.table(job.id=1:9600, chunk=1:50)
+njobs = findJobs() %>% nrow()
+chunk_df = data.table(job.id=1:njobs, chunk=1:100)
 head(chunk_df)
 submitJobs(chunk_df, resources)
 # ------------------------------------------------------------------------------

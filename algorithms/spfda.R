@@ -10,6 +10,7 @@ spfda_wrapper = function(
   X = cbind(1, X)
   Y = dat %>% select(starts_with("t")) %>% as.matrix()
   t = instance$estimated_time
+  nt = length(t)
 
   if(!independent){
     W = spfda::spfda_weight(
@@ -24,7 +25,7 @@ spfda_wrapper = function(
 
   alphas = c(0.5)
   lambdas = 10^seq(log10(1.), log10(100), length.out = 100)
-  if(is.null(K)) Ks = seq(5, 13) else Ks = c(K)
+  if(is.null(K)) Ks = c(floor(nt/2)) else Ks = c(K)
   all_params = expand.grid(lambdas, alphas, Ks)
   names(all_params) = c("lambda", "alpha", "K")
 
@@ -49,12 +50,12 @@ spfda_wrapper = function(
 
   BICfd = cbind(all_params, BIC=unlist(BICs))
   parms = BICfd[which.min(BICfd$BIC),  ]
-  # ggplot() +
-  #   geom_line(
-  #     data=BICfd,
-  #     mapping=aes(x=lambda, color=as.factor(alpha), group=paste0(K, alpha), y=BIC, linetype=as.factor(K))
-  #     ) +
-  #   scale_x_log10()
+  ggplot() +
+    geom_line(
+      data=BICfd,
+      mapping=aes(x=lambda, color=as.factor(alpha), group=paste0(K, alpha), y=BIC, linetype=as.factor(K))
+      ) +
+    scale_x_log10()
 
   out = spfda::spfda(
     Y=Y,
