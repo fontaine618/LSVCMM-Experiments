@@ -24,7 +24,7 @@ spfda_wrapper = function(
   }
 
   alphas = c(0.5)
-  lambdas = 10^seq(log10(1.), log10(100), length.out = 100)
+  lambdas = 10^seq(log10(10), log10(200), length.out = 100)
   if(is.null(K)) Ks = c(floor(nt/2)) else Ks = c(K)
   all_params = expand.grid(lambdas, alphas, Ks)
   names(all_params) = c("lambda", "alpha", "K")
@@ -45,10 +45,15 @@ spfda_wrapper = function(
       CI=F,
       W=W
     )
-    BIC(res)
+    df = sum(abs(res$get_coef()[2, ])>1e-10)
+    c(df, BIC(res))
   })
 
-  BICfd = cbind(all_params, BIC=unlist(BICs))
+  BICfd = cbind(
+    all_params,
+    BIC=unlist(BICs)[seq(2, length(unlist(BICs)), 2)],
+    df=unlist(BICs)[seq(1, length(unlist(BICs)), 2)]
+  )
   parms = BICfd[which.min(BICfd$BIC),  ]
   # ggplot() +
   #   geom_line(

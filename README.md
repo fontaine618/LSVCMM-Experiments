@@ -49,13 +49,7 @@ Experiments accompnaying the LSVCMM paper
 - Difference in estimated cov parameter: full optimization finds the true value, 2S finds something smaller
 
 todo:
-[ ] change missingness to block sqrt*qqrt
-[ ] understand SPFDA issue? I think it is imputation
 [ ] redo experiments + add more
-[ ] check boundary weighing / implement data-adaptive
-
-[ ] Looks like I was not setting tolerence small enough, still some movement between 1e-6 and 1e-8
-[ ] Maybe need to quicken convergence
 
 
 Profiling:
@@ -63,3 +57,11 @@ Profiling:
 - biggest improvement would be to reduce the number of total iterations
 - mean update is 2x more expensive than cov updates
 - if there is a way to speed up linear predictor, that'd be great
+
+
+### 31/10
+
+- very little difference between kernel and splines
+- consistent results across the board
+- dep > ind > cross sectional as expected
+- main difference is that spdfa selects a bit more so better estimation error, larger FDR
