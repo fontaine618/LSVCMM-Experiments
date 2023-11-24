@@ -48,7 +48,6 @@ colors = c(
   "LSVCM"="lightgreen",
   "SPFDA"="bisque3"
 )
-fn = "sigmoid"
 
 display_names = c(
   "LSVCMM"="LSVCMM",
@@ -56,6 +55,8 @@ display_names = c(
   "LSVCMM.Independent"="LSVCM",
   "SPFDA"="SPFDA"
 )
+
+fn = "sigmoid"
 
 for(exp in experiments){
   estimates = read.csv(paste0("experiment_", exp$dir, "/results/estimates.csv"))
@@ -73,8 +74,9 @@ for(exp in experiments){
   gby1 = c("algorithm", "seed", exp$xvar)
   gby2 = c("algorithm", exp$xvar)
 
-  # MAE
+  # MAE Null
   df = estimation_errors %>%
+    filter(time < 0.45) %>%
     group_by(across(all_of(gby1))) %>%
     summarise(mae=mean(abs(group_difference))) %>%
     group_by(across(all_of(gby2))) %>%
@@ -97,7 +99,7 @@ for(exp in experiments){
       mapping=aes(x=!!sym(exp$xvar), ymin=mean-se, ymax=mean+se, fill=algorithm),
       alpha=0.2
     ) +
-    xlab(exp$xname) + ylab("MAE") +
+    xlab(exp$xname) + ylab("MAE (null)") +
     labs(color="Algorithm", linetype="Algorithm", shape="Algorithm", fill="Algorithm") +
     theme(
       legend.position="none",
@@ -109,13 +111,57 @@ for(exp in experiments){
     ) +
     scale_fill_manual(values=colors, aesthetics=c("fill", "color")) +
     ggtitle(exp$name) +
-    ylim(0, 0.4)
+    ylim(0, 0.2)
   if(exp$col>1) g = g + theme(
     axis.text.y=element_blank(),
     axis.ticks.y=element_blank(),
     axis.title.y=element_blank()
   )
-  gs[[paste0(exp$dir, "mae")]] = g
+  gs[[paste0(exp$dir, "mae_null")]] = g
+
+  # MAE Non-Null
+  df = estimation_errors %>%
+    filter(time > 0.45) %>%
+    group_by(across(all_of(gby1))) %>%
+    summarise(mae=mean(abs(group_difference))) %>%
+    group_by(across(all_of(gby2))) %>%
+    summarise(
+      mean=mean(mae, na.rm=T), sd=sd(mae, na.rm=T), se=sd(mae, na.rm=T)/sqrt(n())
+    )
+  g = ggplot() +
+    theme_minimal() +
+    # geom_vline(xintercept=exp$ref, linetype="dashed", color="grey") +
+    geom_line(
+      data=df,
+      mapping=aes(x=!!sym(exp$xvar), y=mean, color=algorithm, linetype=algorithm),
+    ) +
+    geom_point(
+      data=df,
+      mapping=aes(x=!!sym(exp$xvar), y=mean, color=algorithm, shape=algorithm),
+    ) +
+    geom_ribbon(
+      data=df,
+      mapping=aes(x=!!sym(exp$xvar), ymin=mean-se, ymax=mean+se, fill=algorithm),
+      alpha=0.2
+    ) +
+    xlab(exp$xname) + ylab("MAE (non-null)") +
+    labs(color="Algorithm", linetype="Algorithm", shape="Algorithm", fill="Algorithm") +
+    theme(
+      legend.position="none",
+      text=element_text(family="Helvetica"),
+      axis.text.x=element_blank(),
+      axis.ticks.x=element_blank(),
+      axis.title.x=element_blank(),
+      panel.border = element_rect(colour = "grey", fill=NA, size=1),
+    ) +
+    scale_fill_manual(values=colors, aesthetics=c("fill", "color")) +
+    ylim(0, 0.8)
+  if(exp$col>1) g = g + theme(
+    axis.text.y=element_blank(),
+    axis.ticks.y=element_blank(),
+    axis.title.y=element_blank()
+  )
+  gs[[paste0(exp$dir, "mae_nonnull")]] = g
 
 
   # Classification metrics
@@ -135,11 +181,11 @@ for(exp in experiments){
       tpr=tp/pmax(tp+fn, 1),
     )
 
-  # accuracy
+  # prop selected
   df = dfall %>%
     group_by(across(all_of(gby2))) %>%
     summarise(
-      mean=mean(acc), sd=sd(acc), se=sd(acc)/sqrt(n())
+      mean=mean(ppv), sd=sd(ppv), se=sd(ppv)/sqrt(n())
     )
   g = ggplot() +
     theme_minimal() +
@@ -157,7 +203,89 @@ for(exp in experiments){
       mapping=aes(x=!!sym(exp$xvar), ymin=mean-se, ymax=mean+se, fill=algorithm),
       alpha=0.2
     ) +
-    xlab(exp$xname) + ylab("Accuracy") +
+    xlab(exp$xname) + ylab("Prop. selected") +
+    labs(color="Algorithm", linetype="Algorithm", shape="Algorithm", fill="Algorithm") +
+    theme(
+      legend.position="none",
+      text=element_text(family="Helvetica"),
+      axis.text.x=element_blank(),
+      axis.ticks.x=element_blank(),
+      axis.title.x=element_blank(),
+      panel.border = element_rect(colour = "grey", fill=NA, size=1),
+    ) +
+    scale_fill_manual(values=colors, aesthetics=c("fill", "color")) +
+    ylim(0, 1)
+  if(exp$col>1) g = g + theme(
+    axis.text.y=element_blank(),
+    axis.ticks.y=element_blank(),
+    axis.title.y=element_blank()
+  )
+  gs[[paste0(exp$dir, "prop_selected")]] = g
+
+  # fdr
+  df = dfall %>%
+    group_by(across(all_of(gby2))) %>%
+    summarise(
+      mean=mean(fdr), sd=sd(fdr), se=sd(fdr)/sqrt(n())
+    )
+  g = ggplot() +
+    theme_minimal() +
+    # geom_vline(xintercept=exp$ref, linetype="dashed", color="grey") +
+    geom_line(
+      data=df,
+      mapping=aes(x=!!sym(exp$xvar), y=mean, color=algorithm, linetype=algorithm),
+    ) +
+    geom_point(
+      data=df,
+      mapping=aes(x=!!sym(exp$xvar), y=mean, color=algorithm, shape=algorithm),
+    ) +
+    geom_ribbon(
+      data=df,
+      mapping=aes(x=!!sym(exp$xvar), ymin=mean-se, ymax=mean+se, fill=algorithm),
+      alpha=0.2
+    ) +
+    xlab(exp$xname) + ylab("FDR") +
+    labs(color="Algorithm", linetype="Algorithm", shape="Algorithm", fill="Algorithm") +
+    theme(
+      legend.position="none",
+      text=element_text(family="Helvetica"),
+      axis.text.x=element_blank(),
+      axis.ticks.x=element_blank(),
+      axis.title.x=element_blank(),
+      panel.border = element_rect(colour = "grey", fill=NA, size=1),
+    ) +
+    scale_fill_manual(values=colors, aesthetics=c("fill", "color")) +
+    ylim(0, 0.5)
+  if(exp$col>1) g = g + theme(
+    axis.text.y=element_blank(),
+    axis.ticks.y=element_blank(),
+    axis.title.y=element_blank()
+  )
+  gs[[paste0(exp$dir, "fdr")]] = g
+
+  # tpr
+  df = dfall %>%
+    group_by(across(all_of(gby2))) %>%
+    summarise(
+      mean=mean(tpr), sd=sd(tpr), se=sd(tpr)/sqrt(n())
+    )
+  g = ggplot() +
+    theme_minimal() +
+    # geom_vline(xintercept=exp$ref, linetype="dashed", color="grey") +
+    geom_line(
+      data=df,
+      mapping=aes(x=!!sym(exp$xvar), y=mean, color=algorithm, linetype=algorithm),
+    ) +
+    geom_point(
+      data=df,
+      mapping=aes(x=!!sym(exp$xvar), y=mean, color=algorithm, shape=algorithm),
+    ) +
+    geom_ribbon(
+      data=df,
+      mapping=aes(x=!!sym(exp$xvar), ymin=mean-se, ymax=mean+se, fill=algorithm),
+      alpha=0.2
+    ) +
+    xlab(exp$xname) + ylab("TPR") +
     labs(color="Algorithm", linetype="Algorithm", shape="Algorithm", fill="Algorithm") +
     theme(
       legend.position="none",
@@ -165,13 +293,13 @@ for(exp in experiments){
       panel.border = element_rect(colour = "grey", fill=NA, size=1),
     ) +
     scale_fill_manual(values=colors, aesthetics=c("fill", "color")) +
-    ylim(0.4, 1)
+    ylim(0, 1)
   if(exp$col>1) g = g + theme(
     axis.text.y=element_blank(),
     axis.ticks.y=element_blank(),
     axis.title.y=element_blank()
   )
-  gs[[paste0(exp$dir, "acc")]] = g
+  gs[[paste0(exp$dir, "tpr")]] = g
 
 }
 
@@ -199,15 +327,15 @@ glegend = ggpubr::as_ggplot(glegend)
 
 g = cowplot::plot_grid(
   plotlist=gs,
-  ncol=length(experiments), nrow=2,
+  ncol=length(experiments), nrow=5,
   byrow=F,
   align="none", axis="tblr",
   rel_widths=c(1, rep(0.9, length(experiments)-1)),
-  rel_heights=c(1, 1)
+  rel_heights=c(1, 0.8, 0.8, 0.8, 1)
 )
 
 
-gg = cowplot::plot_grid(g, glegend, ncol=1, nrow=2, rel_heights=c(10, 1))
+gg = cowplot::plot_grid(g, glegend, ncol=1, nrow=2, rel_heights=c(20, 1))
 
-ggsave(paste0("./sim_sparse.pdf"), gg, width=length(experiments)*3+1, height=6)
+ggsave(paste0("./sim_sparse_supp.pdf"), gg, width=length(experiments)*3+1, height=15)
 

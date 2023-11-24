@@ -4,7 +4,7 @@ library(magrittr)
 
 experiments = list(
   snr=list(
-    dir="snr100",
+    dir="snr",
     name="(a) Signal strength",
     xvar="observation_variance",
     xname="Variance",
@@ -13,16 +13,16 @@ experiments = list(
     ref=1.
   ),
   sparse=list(
-    dir="missing100",
+    dir="missing",
     name="(b) Sparsity",
     xvar="prop_observed",
     xname="Proportion observed",
     col=2,
     transform="none",
-    ref=0.1
+    ref=0.5
   ),
   # cov=list(
-  #   dir="ar1_100",
+  #   dir="ar1",
   #   name="(c) Cov. misspecification",
   #   xvar="random_effect_ar1_correlation",
   #   xname="RE AR(1) correlation",
@@ -31,7 +31,7 @@ experiments = list(
   #   ref=1.
   # ),
   re=list(
-    dir="re_ratio100",
+    dir="re_ratio",
     name="(c) RE size",
     xvar="random_effect_variance_ratio",
     xname="RE variance ratio",
@@ -48,7 +48,6 @@ colors = c(
   "LSVCM"="lightgreen",
   "SPFDA"="bisque3"
 )
-fn = "sigmoid"
 
 display_names = c(
   "LSVCMM"="LSVCMM",
@@ -66,9 +65,9 @@ for(exp in experiments){
   # patch names
   parameters$algorithm = display_names[parameters$algorithm]
 
-  estimates %<>% left_join(parameters, by="job.id") %>% filter(grpdiff_function==fn)
-  estimation_errors %<>% left_join(parameters, by="job.id") %>% filter(grpdiff_function==fn)
-  classifications %<>% left_join(parameters, by="job.id") %>% filter(grpdiff_function==fn)
+  estimates %<>% left_join(parameters, by="job.id")
+  estimation_errors %<>% left_join(parameters, by="job.id")
+  classifications %<>% left_join(parameters, by="job.id")
 
   gby1 = c("algorithm", "seed", exp$xvar)
   gby2 = c("algorithm", exp$xvar)
@@ -158,14 +157,14 @@ for(exp in experiments){
       alpha=0.2
     ) +
     xlab(exp$xname) + ylab("Accuracy") +
-    labs(color="Algorithm", linetype="Algorithm", shape="Algorithm", fill="Algorithm") +
+    scale_fill_manual(values=colors, aesthetics=c("fill", "color")) +
     theme(
       legend.position="none",
       text=element_text(family="Helvetica"),
       panel.border = element_rect(colour = "grey", fill=NA, size=1),
     ) +
-    scale_fill_manual(values=colors, aesthetics=c("fill", "color")) +
-    ylim(0.4, 1)
+    labs(color="Algorithm", linetype="Algorithm", shape="Algorithm", fill="Algorithm") +
+    ylim(0., 1)
   if(exp$col>1) g = g + theme(
     axis.text.y=element_blank(),
     axis.ticks.y=element_blank(),
@@ -209,5 +208,5 @@ g = cowplot::plot_grid(
 
 gg = cowplot::plot_grid(g, glegend, ncol=1, nrow=2, rel_heights=c(10, 1))
 
-ggsave(paste0("./sim_sparse.pdf"), gg, width=length(experiments)*3+1, height=6)
+ggsave(paste0("./sim_block.pdf"), gg, width=length(experiments)*3+1, height=6)
 
