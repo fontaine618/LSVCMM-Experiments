@@ -2,7 +2,6 @@ library(batchtools)
 library(data.table)
 library(tidyverse)
 library(magrittr)
-# devtools::install_github("fontaine618/LSVCMM")
 
 
 # ==============================================================================
