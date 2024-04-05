@@ -96,14 +96,15 @@ gmeta = ggplot() +
     plot.title=element_text(size=12)
   ) +
   scale_pattern_manual(
-    values=c(SCC="stripe", `HP/CIS`="none"),
+    values=c("SCC"="stripe", "HP/CIS"="none"),
+    labels=c("SCC"="SCC", "HP/CIS"="ED/CIS"),
     name="Diagnosis"
   ) +
   scale_fill_manual(
     c("KO", "WT"),
     values=c("#FFCB05", "#00274C"),
     aesthetics=c("color", "fill"),
-    name="Genotype",
+    name="DMBT1",
     guide = guide_legend(override.aes = list(pattern = "none"))
   ) +
   scale_alpha_manual(
@@ -135,8 +136,8 @@ gpatterns = ggplot() +
     mapping=aes(x=as.factor(Week), y=as.factor(pattern_id), fill=value)
   ) +
   scale_fill_manual(
-    values=c("1"="#FFCB05", "0"="#00274C"),
-    labels=c("1"="Missing", "0"="Observed")
+    values=c("0"="#000000", "1"="#bbbbbb"),
+    labels=c("0"="Observed", "1"="Missing")
     ) +
   scale_y_discrete(
     breaks=df_pattern_n$pattern_id,
@@ -147,11 +148,13 @@ gpatterns = ggplot() +
     text=element_text(family="Helvetica"),
     plot.title=element_text(size=12)
   ) +
-  labs(fill="", x="Week", y="Pattern occurences")
+  labs(fill="", x="Week", y="Pattern occurences") +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+
 
 # merge
 g = egg::ggarrange(gmeta, gpatterns, ncol=2, widths=c(2, 1))
-ggsave(paste0(DIR_FIGURES, "missingness.pdf"), g, width=10, height=4)
+ggsave(paste0(DIR_FIGURES, "missingness.pdf"), g, width=10, height=3)
 # ------------------------------------------------------------------------------
 
 
@@ -160,7 +163,7 @@ ggsave(paste0(DIR_FIGURES, "missingness.pdf"), g, width=10, height=4)
 
 # ==============================================================================
 # Example
-otu = "Otu0061"
+otu = "Otu0014"
 df = bind_cols(data.frame(data$meta), data$clr[, otu])
 colnames(df) = c("Mouse", "Week", "Type", "Gender", "Diagnosis", "SCC", "CLR")
 df %<>% rename(Sex=Gender, Genotype=Type)
@@ -266,7 +269,7 @@ gmean = ggplot() +
   theme_minimal() +
   geom_line(
     data=grp_means,
-    mapping=aes(x=estimated_time, y=estimate, group=Genotype, color=Genotype),
+    mapping=aes(x=estimated_time, y=median, group=Genotype, color=Genotype),
     alpha=1, linewidth=1.5
   ) +
   geom_ribbon(
@@ -285,7 +288,7 @@ gmean = ggplot() +
   scale_color_manual(
     c("KO", "WT"),
     values=c("#FFCB05", "#00274C"),
-    name="Genotype",
+    name="DMBT1",
     aesthetics=c("color", "fill")
   ) +
   ggtitle(paste0(otu, ": Fitted values")) +
