@@ -4,7 +4,8 @@
 .Ruserdata
 *batchtools*
 *registry*
-.pdf
+*.pdf
+*.png
 penalty/
 Exoplanets/
 dmbt1/data
