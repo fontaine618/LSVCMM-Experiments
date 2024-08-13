@@ -7,8 +7,8 @@ library(shadowtext)
 
 # ==============================================================================
 # Setup batchtools registry
-DIR = paste0("./dmbt1/registry/")
-DIR_FIGURES = paste0("./dmbt1/figures/")
+DIR = paste0("./dmbt1/registry_defense/")
+DIR_FIGURES = paste0("./dmbt1/figures_defense/")
 registry = loadRegistry(file.dir=DIR)
 t0 = c(0, 4, 8, 12, 16, 22)
 tax_level = "OTU"
@@ -60,20 +60,20 @@ estimates %<>%
 cols = list(
   LSVCMM=list(display="LSVCMM", pos="left"),
   # LSVCM=list(display="LSVCM", pos="middle"),
-  ALasso=list(display="ALasso", pos="middle"),
+  # ALasso=list(display="ALasso", pos="middle"),
   # OLS=list(display="OLS", pos="middle"),
   SPFDA=list(display="SPFDA", pos="right")
 )
 estimates %<>% filter(algo_name %in% names(cols))
 rows = list(
   KO=list(display="KO-WT", pos="top"),
-  SCC=list(display="SCC-HP/CIS", pos="middle"),
+  SCC=list(display="SCC-ED/CIS", pos="middle"),
   KO_SCC=list(display="Interaction", pos="bottom")
 )
 
 
 ncols = length(cols)
-rel_widths=c(2, 1, 2)
+rel_widths=c(2, 1, 1, 2)
 nrows = length(rows)
 rel_heights = c(1, 1, 1)
 
@@ -150,10 +150,10 @@ heights = sapply(rows, function(x) x$ntaxas)
 heights[1] = heights[1] + 2
 heights[length(heights)] = heights[length(heights)] + 2
 
-g = egg::ggarrange(plots=gs, ncol=ncols, nrow=nrows, heights=heights, widths=c(5, 5, 5))
+g = egg::ggarrange(plots=gs, ncol=ncols, nrow=nrows, heights=heights, widths=rep(5, ncols))
 
 ggsave(
   paste0(DIR_FIGURES, "comparison_all.pdf"), g,
-  width=8, height=8
+  width=6, height=8
   )
 # ------------------------------------------------------------------------------

@@ -32,7 +32,7 @@ data = list(
 
 # ==============================================================================
 # Setup batchtools registry
-DIR = paste0("./dmbt1/registry/")
+DIR = paste0("./dmbt1/registry_defense/")
 if(dir.exists(DIR)) unlink(DIR, recursive=T)
 
 registry = makeExperimentRegistry(
@@ -313,10 +313,6 @@ addAlgorithm(
   name="SPFDA",
   fun=spfda
 )
-addAlgorithm(
-  name="OLS",
-  fun=ols
-)
 # ------------------------------------------------------------------------------
 
 
@@ -333,8 +329,7 @@ algorithms = list(
   `LSVCMM`=data.table(cross_sectional=F, independent=F),
   `LSVCM`=data.table(cross_sectional=F, independent=T),
   `ALasso`=data.table(cross_sectional=T, independent=T),
-  `SPFDA`=data.table(),
-  `OLS`=data.table()
+  `SPFDA`=data.table()
 )
 
 addExperiments(
