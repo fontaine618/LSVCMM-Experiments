@@ -20,7 +20,7 @@ experiments = list(
     col=2,
     transform="none",
     ref=0.5
-  ),
+  )
   # cov=list(
   #   dir="ar1",
   #   name="(c) Cov. misspecification",
@@ -30,15 +30,15 @@ experiments = list(
   #   transform="none",
   #   ref=1.
   # ),
-  re=list(
-    dir="re_ratio",
-    name="(c) RE size",
-    xvar="random_effect_variance_ratio",
-    xname="RE variance ratio",
-    col=3,
-    transform="sqrt",
-    ref=1.
-  )
+  # re=list(
+  #   dir="re_ratio",
+  #   name="(c) RE size",
+  #   xvar="random_effect_variance_ratio",
+  #   xname="RE variance ratio",
+  #   col=3,
+  #   transform="sqrt",
+  #   ref=1.
+  # )
 )
 
 gs = list()
@@ -108,7 +108,7 @@ for(exp in experiments){
     ) +
     scale_fill_manual(values=colors, aesthetics=c("fill", "color")) +
     ggtitle(exp$name) +
-    ylim(0, 0.4)
+    ylim(0, 0.36)
   if(exp$col>1) g = g + theme(
     axis.text.y=element_blank(),
     axis.ticks.y=element_blank(),
@@ -164,7 +164,7 @@ for(exp in experiments){
       panel.border = element_rect(colour = "grey", fill=NA, size=1),
     ) +
     labs(color="Algorithm", linetype="Algorithm", shape="Algorithm", fill="Algorithm") +
-    ylim(0., 1)
+    ylim(0.3, 1)
   if(exp$col>1) g = g + theme(
     axis.text.y=element_blank(),
     axis.ticks.y=element_blank(),
@@ -192,7 +192,10 @@ gtmp = ggplot() +
   scale_fill_manual(values=colors, aesthetics=c("fill", "color")) +
   xlab(exp$xname) + ylab("FDR") +
   labs(color="Algorithm", linetype="Algorithm", shape="Algorithm", fill="Algorithm") +
-  theme(legend.direction="horizontal")
+  theme(
+    legend.direction="horizontal",
+    text=element_text(family="Helvetica")
+    )
 glegend = cowplot::get_legend(gtmp)
 glegend = ggpubr::as_ggplot(glegend)
 
@@ -208,5 +211,5 @@ g = cowplot::plot_grid(
 
 gg = cowplot::plot_grid(g, glegend, ncol=1, nrow=2, rel_heights=c(10, 1))
 
-ggsave(paste0("./sim_block.pdf"), gg, width=length(experiments)*3+1, height=6)
+ggsave(paste0("./sim_block_defense.png"), gg, width=length(experiments)*3+1, height=6)
 
