@@ -16,7 +16,7 @@ registry = makeExperimentRegistry(
   seed=1,
   packages=c("dplyr", "magrittr", "LSVCMM")
 )
-registry$cluster.functions = makeClusterFunctionsMulticore(ncpus=8)
+registry$cluster.functions = makeClusterFunctionsMulticore(ncpus=15)
 # ------------------------------------------------------------------------------
 
 
@@ -271,7 +271,7 @@ addAlgorithm(
 
 # ==============================================================================
 # Experimental design
-n_reps=500
+n_reps=1000
 problems = list(
   `synthetic`=CJ(
     scenario=c("A", "B", "C", "D"),
