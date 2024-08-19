@@ -304,6 +304,31 @@ getStatus()
 
 
 
+# ==============================================================================
+# Restart
+library(batchtools)
+library(data.table)
+library(tidyverse)
+library(magrittr)
+
+name = "experiment_pvalues"
+DIR = paste0("./", name, "/")
+DIR_REGISTRY = paste0("./", name, "/registry/")
+
+registry = loadRegistry(
+  file.dir=DIR_REGISTRY,
+  writeable=T
+)
+registry$cluster.functions = makeClusterFunctionsMulticore(ncpus=15)
+
+getStatus()
+
+todo = findNotDone()
+submitJobs(todo, resources=list(walltime=10000))
+# ------------------------------------------------------------------------------
+
+
+
 
 
 # ==============================================================================
@@ -328,15 +353,16 @@ registry = loadRegistry(
 
 # ==============================================================================
 # Results
-estimate = function(result) result$omni_pvalues
-estimates = reduceResultsList(fun = estimate) %>% bind_rows(.id="job.id")
-estimates %<>% mutate(job.id = as.numeric(job.id))
-
 parameters = getJobPars() %>% unwrap()
 parameters %<>% mutate(job.id = as.numeric(job.id))
 
-estimates %<>% left_join(parameters, by="job.id")
-estimates %>%
+# overall p-values
+fun = function(result) result$omni_pvalues
+pvals = reduceResultsList(fun = fun) %>% bind_rows(.id="job.id")
+pvals %<>% mutate(job.id = as.numeric(job.id))
+
+pvals %<>% left_join(parameters, by="job.id")
+omni_pvalues = pvals %>%
   group_by(scenario, effect_size) %>%
   summarize(
     normal_min=mean(normal_min<0.05),
@@ -345,4 +371,26 @@ estimates %>%
     percentile_fisher=mean(percentile_fisher<0.05),
     percentile=mean(percentile<0.05)
   )
+
+# p-values per variables
+fun = function(result) result$omni_pvalues_pervar
+pvals_pervar = reduceResultsList(fun = fun) %>% bind_rows(.id="job.id")
+pvals_pervar %<>% mutate(job.id = as.numeric(job.id))
+
+pvals_pervar %<>% left_join(parameters, by="job.id")
+omni_pvalues_pervar = pvals_pervar %>%
+  group_by(scenario, effect_size, var) %>%
+  summarize(
+    normal_min=mean(normal_min<0.05),
+    normal_fisher=mean(normal_fisher<0.05),
+    percentile_min=mean(percentile_min<0.05),
+    percentile_fisher=mean(percentile_fisher<0.05),
+    percentile=mean(percentile<0.05)
+  )
+
+# save
+DIR_RESULTS = paste0("./", name, "/results/")
+if(!dir.exists(DIR_RESULTS)) dir.create(DIR_RESULTS, recursive=T)
+write_csv(omni_pvalues, paste0(DIR_RESULTS, "omni_pvalues.csv"))
+write_csv(omni_pvalues_pervar, paste0(DIR_RESULTS, "omni_pvalues_pervar.csv"))
 # ------------------------------------------------------------------------------
