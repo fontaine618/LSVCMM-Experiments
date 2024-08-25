@@ -7,8 +7,8 @@ library(shadowtext)
 
 # ==============================================================================
 # Setup batchtools registry
-DIR = paste0("./dmbt1/registry_defense/")
-DIR_FIGURES = paste0("./dmbt1/figures_defense/")
+DIR = paste0("./dmbt1/registry/")
+DIR_FIGURES = paste0("./dmbt1/figures/")
 registry = loadRegistry(file.dir=DIR)
 t0 = c(0, 4, 8, 12, 16, 22)
 tax_level = "OTU"
@@ -25,18 +25,6 @@ estimates %<>% mutate(job.id = as.numeric(job.id)) %>% rename(otu2=otu)
 parameters = getJobPars() %>% unwrap()
 parameters %<>% mutate(job.id = as.numeric(job.id))
 estimates %<>% left_join(parameters, by="job.id")
-# # find missing jobs
-# edf = estimates %>% select(job.id, otu2, algo_name) %>%
-#   group_by(job.id, otu2, algo_name) %>%
-#   summarise(n=n()) %>%
-#   select(-n) %>% rename(otu=otu2, algorithm=algo_name, ejob.id=job.id)
-# pdf = parameters %>% select(job.id, otu, algorithm) %>%
-#   group_by(job.id, otu, algorithm) %>%
-#   summarise(n=n()) %>%
-#   select(-n) %>% rename(pjob.id=job.id)
-# missing = full_join(edf, pdf, by=c("otu", "algorithm")) %>% filter(is.na(ejob.id))
-# missing_ids = missing$pjob.id
-
 # patch SPFDA from 1.96 to bonferonni sim. band
 cval = qnorm(1-0.025/6)
 estimates %<>%
@@ -60,7 +48,7 @@ estimates %<>%
 cols = list(
   LSVCMM=list(display="LSVCMM", pos="left"),
   # LSVCM=list(display="LSVCM", pos="middle"),
-  # ALasso=list(display="ALasso", pos="middle"),
+  ALasso=list(display="ALasso", pos="middle"),
   # OLS=list(display="OLS", pos="middle"),
   SPFDA=list(display="SPFDA", pos="right")
 )
