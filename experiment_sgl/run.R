@@ -1,5 +1,3 @@
-source("/storage/work/spf5519/LSVCMM/renv/activate.R")
-
 library(batchtools)
 library(data.table)
 library(tidyverse)
@@ -7,8 +5,9 @@ library(magrittr)
 
 # ==============================================================================
 # Setup batchtools registry
-setwd("/storage/work/spf5519/LSVCMM/LSVCMM-Experiments")
 
+setwd("/storage/work/spf5519/LSVCMM/LSVCMM-Experiments")
+env_path = "/storage/work/spf5519/LSVCMM/renv/activate.R"
 name = "experiment_sgl"
 DIR = paste0("./", name, "/")
 DIR_REGISTRY = paste0("./", name, "/registry/")
@@ -38,7 +37,7 @@ addProblem(
 )
 
 # for debugging
-instance = synthetic(NULL, NULL, n_timepoints=51, n_features=5)
+# instance = synthetic(NULL, NULL, n_timepoints=51, n_features=5)
 # ------------------------------------------------------------------------------
 
 
@@ -58,7 +57,7 @@ addAlgorithm(
 
 # ==============================================================================
 # Experimental design
-n_reps=2
+n_reps=100
 problems = list(
   `synthetic`=CJ(
     n_subjects=20,
@@ -83,7 +82,8 @@ algorithms = list(
     independent=F,
     penalty.adaptive=0.5,
     penalty.alpha=seq(0, 1, 0.1),
-    kernel.scale=0.2
+    kernel.scale=0.2,
+    add_intercept=F
     )
 )
 
@@ -107,9 +107,10 @@ resources = list(
   partition="open",
   memory="10g", # this is per cpu
   ncpus=1,
-  walltime="3:00:00",
+  walltime="2:00:00",
   chunks.as.arrayjobs=FALSE,
-  job_name=name
+  job_name=name,
+  env=env_path
 )
 njobs = findJobs() %>% nrow()
 chunk_df = data.table(job.id=1:njobs, chunk=1:n_reps)
