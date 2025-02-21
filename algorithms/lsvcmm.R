@@ -136,7 +136,8 @@ lsvcmm_wrapper_p = function(
 
   i = which.min(fit$results[[selection]])
   B = t(fit$vc_path[,,i])
-  colnames(B) = c("intercept", instance$colnames$vc_covariates)
+  if(add_intercept) colnames(B) = c("intercept", instance$colnames$vc_covariates)
+  if(!add_intercept) colnames(B) = instance$colnames$vc_covariates
   res = fit$results[i, ]
 
   estimate = data.frame(
