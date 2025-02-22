@@ -154,11 +154,13 @@ lsvcmm_wrapper_p = function(
     time=instance$estimated_time,
     abs(B) > 0
   )
+  Btrue = instance$true_values %>% select(-time)
+  if(!add_intercept) Btrue %<>% select(-intercept)
 
   classification_error = data.frame(
     time=instance$estimated_time,
     ifelse(
-      instance$true_values %>% select(-time) == 0,
+      Btrue == 0,
       ifelse(decision %>% select(-time) %>% as.matrix, "FP", "TN"), # Negative: Detection, No Detection
       ifelse(decision %>% select(-time) %>% as.matrix, "TP", "FN") # Positive: Detection, No Detection
     )
