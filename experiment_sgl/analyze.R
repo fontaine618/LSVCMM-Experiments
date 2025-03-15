@@ -65,24 +65,24 @@ for(col in seq_along(experiments)){
     theme(legend.position="none")
   gs[[length(gs)+1]] = g
 
-  # plot estimated curves
-  df = estimates %>% filter(effect_sparsity==!!effect_sparsity, effect_groupsparsity==!!effect_groupsparsity)
-  # wide to long
-  df = df %>% tidyr::pivot_longer(cols=3:7, names_to="feature", values_to="estimate")
-  df = df %>% group_by(time, feature) %>% summarise(
-    median=median(estimate),
-    lower=quantile(estimate, 0.025),
-    upper=quantile(estimate, 0.975)
-    ) %>% ungroup()
-  g = ggplot() +
-    geom_ribbon(data=df, aes(x=time, ymin=lower, ymax=upper, fill=feature), alpha=0.1) +
-    geom_line(data=df, aes(x=time, y=median, color=feature, group=feature)) +
-    # geom_smooth(data=df, aes(x=time, y=estimate, color=feature, group=feature), method="gam") +
-    theme_minimal() +
-    coord_cartesian(ylim=c(-1.1, 1.1)) +
-    labs(x="Time", y=ifelse(col==1, "Estimated VCs", "")) +
-    theme(legend.position="none")
-  gs[[length(gs)+1]] = g
+  # # plot estimated curves
+  # df = estimates %>% filter(effect_sparsity==!!effect_sparsity, effect_groupsparsity==!!effect_groupsparsity)
+  # # wide to long
+  # df = df %>% tidyr::pivot_longer(cols=3:7, names_to="feature", values_to="estimate")
+  # df = df %>% group_by(time, feature) %>% summarise(
+  #   median=median(estimate),
+  #   lower=quantile(estimate, 0.025),
+  #   upper=quantile(estimate, 0.975)
+  #   ) %>% ungroup()
+  # g = ggplot() +
+  #   geom_ribbon(data=df, aes(x=time, ymin=lower, ymax=upper, fill=feature), alpha=0.1) +
+  #   geom_line(data=df, aes(x=time, y=median, color=feature, group=feature)) +
+  #   # geom_smooth(data=df, aes(x=time, y=estimate, color=feature, group=feature), method="gam") +
+  #   theme_minimal() +
+  #   coord_cartesian(ylim=c(-1.1, 1.1)) +
+  #   labs(x="Time", y=ifelse(col==1, "Estimated VCs", "")) +
+  #   theme(legend.position="none")
+  # gs[[length(gs)+1]] = g
 
   # plot histogram of selected alpha
   df = results %>% filter(effect_sparsity==!!effect_sparsity, effect_groupsparsity==!!effect_groupsparsity)
@@ -98,7 +98,7 @@ for(col in seq_along(experiments)){
   df = estimation_errors %>% filter(effect_sparsity==!!effect_sparsity, effect_groupsparsity==!!effect_groupsparsity)
   df = df %>% group_by(seed, penalty.alpha) %>% summarise(mae=mean(abs(X1) + abs(X2) + abs(X3) + abs(X4) + abs(X5))/51) %>% ungroup()
   g = ggplot() +
-    geom_smooth(data=df, aes(x=penalty.alpha, y=mae), method="loess") +
+    geom_boxplot(data=df, aes(x=penalty.alpha, y=mae, group=penalty.alpha), outlier.alpha=0.2) +
     labs(x=xdisplay, y=ifelse(col==1, "MAE", "")) +
     theme_minimal() +
     expand_limits(y=0)
@@ -123,46 +123,46 @@ for(col in seq_along(experiments)){
       fdrrate=fp/(fp+tp)
     )
   g = ggplot() +
-    geom_smooth(data=df, aes(x=penalty.alpha, y=accuracy), method="loess") +
+    geom_boxplot(data=df, aes(x=penalty.alpha, y=accuracy, group=penalty.alpha), outlier.alpha=0.2) +
     labs(x=xdisplay, y=ifelse(col==1, "Accuracy", "")) +
     theme_minimal() +
     expand_limits(y=1)
   gs[[length(gs)+1]] = g
   g = ggplot() +
-    geom_smooth(data=df, aes(x=penalty.alpha, y=recall), method="loess") +
+    geom_boxplot(data=df, aes(x=penalty.alpha, y=recall, group=penalty.alpha), outlier.alpha=0.2) +
     labs(x=xdisplay, y=ifelse(col==1, "Recall", "")) +
     theme_minimal()
   gs[[length(gs)+1]] = g
   g = ggplot() +
-    geom_smooth(data=df, aes(x=penalty.alpha, y=precision), method="loess") +
+    geom_boxplot(data=df, aes(x=penalty.alpha, y=precision, group=penalty.alpha), outlier.alpha=0.2) +
     labs(x=xdisplay, y=ifelse(col==1, "Precision", "")) +
     theme_minimal()
   gs[[length(gs)+1]] = g
-  g = ggplot() +
-    geom_smooth(data=df, aes(x=penalty.alpha, y=tp), method="loess") +
-    labs(x=xdisplay, y=ifelse(col==1, "TP", "")) +
-    theme_minimal() +
-    expand_limits(y=1)
-  gs[[length(gs)+1]] = g
-  g = ggplot() +
-    geom_smooth(data=df, aes(x=penalty.alpha, y=fp), method="loess") +
-    labs(x=xdisplay, y=ifelse(col==1, "FP", "")) +
-    theme_minimal() +
-    expand_limits(y=1)
-  gs[[length(gs)+1]] = g
-  g = ggplot() +
-    geom_smooth(data=df, aes(x=penalty.alpha, y=tn), method="loess") +
-    labs(x=xdisplay, y=ifelse(col==1, "TN", "")) +
-    theme_minimal() +
-    expand_limits(y=1)
-  gs[[length(gs)+1]] = g
-  g = ggplot() +
-    geom_smooth(data=df, aes(x=penalty.alpha, y=fn), method="loess") +
-    labs(x=xdisplay, y=ifelse(col==1, "FN", "")) +
-    theme_minimal() +
-    expand_limits(y=1)
-  gs[[length(gs)+1]] = g
+  # g = ggplot() +
+  #   geom_smooth(data=df, aes(x=penalty.alpha, y=tp), method="loess") +
+  #   labs(x=xdisplay, y=ifelse(col==1, "TP", "")) +
+  #   theme_minimal() +
+  #   expand_limits(y=1)
+  # gs[[length(gs)+1]] = g
+  # g = ggplot() +
+  #   geom_smooth(data=df, aes(x=penalty.alpha, y=fp), method="loess") +
+  #   labs(x=xdisplay, y=ifelse(col==1, "FP", "")) +
+  #   theme_minimal() +
+  #   expand_limits(y=1)
+  # gs[[length(gs)+1]] = g
+  # g = ggplot() +
+  #   geom_smooth(data=df, aes(x=penalty.alpha, y=tn), method="loess") +
+  #   labs(x=xdisplay, y=ifelse(col==1, "TN", "")) +
+  #   theme_minimal() +
+  #   expand_limits(y=1)
+  # gs[[length(gs)+1]] = g
+  # g = ggplot() +
+  #   geom_smooth(data=df, aes(x=penalty.alpha, y=fn), method="loess") +
+  #   labs(x=xdisplay, y=ifelse(col==1, "FN", "")) +
+  #   theme_minimal() +
+  #   expand_limits(y=1)
+  # gs[[length(gs)+1]] = g
 }
 
 g = cowplot::plot_grid(plotlist=gs, ncol=length(experiments), byrow=F, align="v")
-ggsave("sim_sgl.pdf", g, width=10, height=16)
+ggsave("sim_sgl.pdf", g, width=10, height=10)

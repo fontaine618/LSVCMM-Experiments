@@ -9,7 +9,9 @@ lsvcmm_wrapper = function(
     penalty.alpha=1.,
     penalty.adaptive=1.,
     penalty.lambda=NULL,
-    penalty.name="adaptive_sparse_group_lasso"
+    penalty.name="adaptive_sparse_group_lasso",
+    ar1.estimated=F,
+    ar1.correlation=1.
 ){
   t0 = proc.time()
   df = instance$data
@@ -22,6 +24,9 @@ lsvcmm_wrapper = function(
     wc_args = list(name="independent")
   }else{
     wc_args = list(name="compound_symmetry", estimate=T, ratio=1.)
+  }
+  if(ar1.correlation < 1.){
+    wc_args = list(name="autoregressive", estimate=T, correlation=ar1.correlation)
   }
   fit = LSVCMM::lsvcmm(
     data=df,
