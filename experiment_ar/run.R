@@ -83,9 +83,9 @@ problems = list(
 )
 
 algorithms = list(
-  `LSVCMM`=data.table(cross_sectional=F, independent=F, penalty.adaptive=1.0, kernel.scale=0.2,
+  `LSVCMM`=data.table(cross_sectional=F, independent=F, penalty.adaptive=0.5, kernel.scale=0.5, penalty.alpha=0.9,
                       ar1.correlation=seq(0, 1, length.out=9)),
-  `LSVCMM.Cross-sectional`=data.table(cross_sectional=T, independent=T, penalty.adaptive=1.0),
+  `LSVCMM.Cross-sectional`=data.table(cross_sectional=T, independent=T, penalty.adaptive=0.5, penalty.alpha=0.9),
   `SPFDA`=data.table(K=20)
 )
 

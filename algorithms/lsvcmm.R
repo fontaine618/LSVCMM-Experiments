@@ -39,6 +39,7 @@ lsvcmm_wrapper = function(
     add_intercept=T,
     estimated_time=instance$estimated_time,
     working_covariance=wc_args,
+    kernel=k_args,
     penalty=list(name=penalty.name,
                  adaptive=penalty.adaptive, alpha=penalty.alpha, penalize_intercept=T,
                  lambda=penalty.lambda, nlambda=ifelse(is.null(penalty.lambda), 100L, 1L)
