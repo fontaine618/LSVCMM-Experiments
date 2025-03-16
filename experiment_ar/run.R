@@ -73,7 +73,7 @@ problems = list(
     n_timepoints=21,
     observation_variance=1.,
     random_effect_ar1_correlation=seq(0, 1, length.out=5),
-    random_effect_variance_ratio=1.,
+    random_effect_variance_ratio=4.,
     effect_size=1.,
     grpdiff_function=c("sine"),
     prop_observed=0.5,
@@ -83,9 +83,10 @@ problems = list(
 )
 
 algorithms = list(
-  `LSVCMM`=data.table(cross_sectional=F, independent=F, penalty.adaptive=0.5, kernel.scale=0.2, ar1.correlation=seq(0, 1, length.out=9)),
-  `LSVCMM.Cross-sectional`=data.table(cross_sectional=T, independent=T, penalty.adaptive=0.5),
-  `SPFDA`=data.table(K=12)
+  `LSVCMM`=data.table(cross_sectional=F, independent=F, penalty.adaptive=1.0, kernel.scale=0.2,
+                      ar1.correlation=seq(0, 1, length.out=9)),
+  `LSVCMM.Cross-sectional`=data.table(cross_sectional=T, independent=T, penalty.adaptive=1.0),
+  `SPFDA`=data.table(K=20)
 )
 
 addExperiments(
@@ -106,7 +107,7 @@ getStatus()
 resources = list(
   account="open",
   partition="open",
-  memory="10g", # this is per cpu
+  memory="7g", # this is per cpu
   ncpus=1,
   walltime="5:00:00",
   chunks.as.arrayjobs=FALSE,
