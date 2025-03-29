@@ -43,7 +43,8 @@ for(col in seq_along(experiments)){
     geom_histogram(data=dfmin, aes(x=ar1.correlation), fill="grey", color="black", breaks=seq(-0.0625, 1.0625, 0.125)) +
     labs(x=xdisplay, y=ifelse(col==1, "Freq. lowest EBIC", "")) +
     theme_minimal() + labs(x=NULL) +
-    ggtitle(paste0("Corr.=", corr))
+    ggtitle(paste0("Corr.=", corr)) +
+    xlim(-0.0625, 1.3125)
   gs[[length(gs)+1]] = g
 
   # plot MAE of the estimates
@@ -53,11 +54,11 @@ for(col in seq_along(experiments)){
   )
   df = df %>% group_by(seed, ar1.correlation, algorithm) %>% summarise(mae=mean(abs(group_difference))) %>% ungroup()
   g = ggplot() +
-    geom_boxplot(data=df, aes(x=ar1.correlation, y=mae, group=ar1.correlation, fill=algorithm), outlier.alpha=0.2) +
+    geom_boxplot(data=df, aes(x=ar1.correlation, y=mae, group=ar1.correlation, fill=algorithm), outliers=F) +
     labs(x=xdisplay, y=ifelse(col==1, "MAE", "")) +
     theme_minimal() +
-    # expand_limits(y=0) +
-    scale_y_log10() +
+    expand_limits(y=0) +
+    # scale_y_log10() +
     theme(legend.position="none") +
     scale_x_continuous(breaks=c(0, 0.5, 1, 1.125, 1.25), labels=c("0", "0.5", "1", "SPFDA", "ALasso")) +
     scale_fill_manual(values=c("LSVCMM"="red", "SPFDA"="bisque3", "ALasso"="lightblue")) +
@@ -86,7 +87,7 @@ for(col in seq_along(experiments)){
       fdrrate=fp/(fp+tp)
     )
   g = ggplot() +
-    geom_boxplot(data=df, aes(x=ar1.correlation, y=accuracy, group=ar1.correlation, fill=algorithm), outlier.alpha=0.2) +
+    geom_boxplot(data=df, aes(x=ar1.correlation, y=accuracy, group=ar1.correlation, fill=algorithm), outliers=F) +
     labs(x=xdisplay, y=ifelse(col==1, "Accuracy", "")) +
     theme_minimal() +
     expand_limits(y=1) +

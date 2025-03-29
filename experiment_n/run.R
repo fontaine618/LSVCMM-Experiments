@@ -3,20 +3,22 @@ library(data.table)
 library(tidyverse)
 library(magrittr)
 
+
 # ==============================================================================
 # Setup batchtools registry
 
 setwd("/storage/work/spf5519/LSVCMM/LSVCMM-Experiments")
 env_path = "/storage/work/spf5519/LSVCMM/renv/activate.R"
-name = "experiment_ar"
+
+name = "experiment_n"
 DIR = paste0("./", name, "/")
 DIR_REGISTRY = paste0("./", name, "/registry/")
-if(dir.exists(DIR_REGISTRY)) unlink(DIR_REGISTRY, recursive=T)
+if(dir.exists(DIR_REGISTRY)) unlink(DIR, recursive=T)
 if(!dir.exists(DIR)) dir.create(DIR, recursive=T)
 registry = makeExperimentRegistry(
   file.dir=DIR_REGISTRY,
   seed=1,
-  packages=c("dplyr", "magrittr", "LSVCMM")
+  packages=c("dplyr", "magrittr", "LSVCMM", "spfda")
 )
 # ------------------------------------------------------------------------------
 
@@ -37,7 +39,17 @@ addProblem(
 )
 
 # for debugging
-# instance = synthetic(NULL, NULL, n_timepoints=51, n_features=5)
+instance = synthetic(NULL, NULL,
+                     n_subjects=100,
+                     prop_observed=1,
+                     observation_variance=1.,
+                     random_effect_ar1_correlation=1.,
+                     random_effect_variance_ratio=1.,
+                     effect_size=1.,
+                     n_timepoints=10,
+                     grpdiff_function="sine",
+                     missingness="sqrt",
+                     seed=1)
 # ------------------------------------------------------------------------------
 
 
@@ -48,11 +60,15 @@ addProblem(
 source("./algorithms/lsvcmm.R")
 source("./algorithms/spfda.R")
 addAlgorithm(
-  name="LSVCMM.Cross-sectional",
+  name="LSVCMM",
   fun=lsvcmm_wrapper
 )
 addAlgorithm(
-  name="LSVCMM",
+  name="LSVCMM.Independent",
+  fun=lsvcmm_wrapper
+)
+addAlgorithm(
+  name="LSVCMM.Cross-sectional",
   fun=lsvcmm_wrapper
 )
 addAlgorithm(
@@ -69,24 +85,24 @@ addAlgorithm(
 n_reps=100
 problems = list(
   `synthetic`=CJ(
-    n_subjects=50,
-    n_timepoints=101,
+    n_subjects=c(20, 30, 50, 100, 150, 200),
+    prop_observed=0.5,
     observation_variance=1.,
-    random_effect_ar1_correlation=seq(0, 1, length.out=5),
-    random_effect_variance_ratio=2.,
+    random_effect_ar1_correlation=1.,
+    random_effect_variance_ratio=1.,
     effect_size=1.,
+    n_timepoints=10,
     grpdiff_function=c("sine"),
-    prop_observed=0.2,
-    missingness="uniform",
+    missingness="sqrt",
     seed=seq(n_reps)
   )
 )
 
 algorithms = list(
-  `LSVCMM`=data.table(cross_sectional=F, independent=F, penalty.adaptive=0.5, kernel.scale=0.5, penalty.alpha=0.9,
-                      ar1.correlation=seq(0, 1, length.out=9)),
-  `LSVCMM.Cross-sectional`=data.table(cross_sectional=T, independent=T, penalty.adaptive=0.5, penalty.alpha=0.9),
-  `SPFDA`=data.table(K=20)
+  `LSVCMM`=data.table(cross_sectional=F, independent=F, penalty.adaptive=0.5, kernel.scale=0.2),
+  `LSVCMM.Independent`=data.table(cross_sectional=F, independent=T, penalty.adaptive=0.5, kernel.scale=0.2),
+  `LSVCMM.Cross-sectional`=data.table(cross_sectional=T, independent=T, penalty.adaptive=0.5),
+  `SPFDA`=data.table(K=12)
 )
 
 addExperiments(
@@ -118,6 +134,7 @@ njobs = findJobs() %>% nrow()
 chunk_df = data.table(job.id=1:njobs, chunk=1:n_reps)
 head(chunk_df)
 submitJobs(chunk_df, resources)
+
 # ------------------------------------------------------------------------------
 
 
