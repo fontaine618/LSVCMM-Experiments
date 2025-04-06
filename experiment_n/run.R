@@ -9,7 +9,8 @@ library(magrittr)
 
 setwd("/storage/work/spf5519/LSVCMM/LSVCMM-Experiments")
 env_path = "/storage/work/spf5519/LSVCMM/renv/activate.R"
-name = "experiment_re_ratio100"
+
+name = "experiment_n"
 DIR = paste0("./", name, "/")
 DIR_REGISTRY = paste0("./", name, "/registry/")
 if(dir.exists(DIR_REGISTRY)) unlink(DIR, recursive=T)
@@ -37,8 +38,18 @@ addProblem(
   data=NULL
 )
 
-# for debugging
-instance = synthetic(NULL, NULL, n_timepoints=100)
+# # for debugging
+# instance = synthetic(NULL, NULL,
+#                      n_subjects=100,
+#                      prop_observed=1,
+#                      observation_variance=1.,
+#                      random_effect_ar1_correlation=1.,
+#                      random_effect_variance_ratio=1.,
+#                      effect_size=1.,
+#                      n_timepoints=10,
+#                      grpdiff_function="sine",
+#                      missingness="sqrt",
+#                      seed=1)
 # ------------------------------------------------------------------------------
 
 
@@ -74,15 +85,15 @@ addAlgorithm(
 n_reps=100
 problems = list(
   `synthetic`=CJ(
-    n_subjects=100,
-    prop_observed=0.1,
+    n_subjects=c(20, 30, 50, 100, 150, 200),
+    prop_observed=0.5,
     observation_variance=1.,
     random_effect_ar1_correlation=1.,
-    random_effect_variance_ratio=seq(0, 2, 0.25),
+    random_effect_variance_ratio=1.,
     effect_size=1.,
-    n_timepoints=100,
-    grpdiff_function=c("sigmoid"),
-    missingness="fixed_uniform",
+    n_timepoints=10,
+    grpdiff_function=c("sine"),
+    missingness="sqrt",
     seed=seq(n_reps)
   )
 )
@@ -91,7 +102,7 @@ algorithms = list(
   `LSVCMM`=data.table(cross_sectional=F, independent=F, penalty.adaptive=0.5, kernel.scale=0.2),
   `LSVCMM.Independent`=data.table(cross_sectional=F, independent=T, penalty.adaptive=0.5, kernel.scale=0.2),
   `LSVCMM.Cross-sectional`=data.table(cross_sectional=T, independent=T, penalty.adaptive=0.5),
-  `SPFDA`=data.table()
+  `SPFDA`=data.table(K=12)
 )
 
 addExperiments(
@@ -144,22 +155,17 @@ registry = loadRegistry(
 DIR_RESULTS = paste0("./", name, "/results/")
 if(!dir.exists(DIR_RESULTS)) dir.create(DIR_RESULTS, recursive=T)
 
-ids = findDone()
-
 estimate = function(result) result$estimate
 estimates = reduceResultsList(fun = estimate) %>% bind_rows(.id="job.id")
 estimates %<>% mutate(job.id = as.numeric(job.id))
-estimates %<>% mutate(job.id=ids$job.id[job.id])
 
 estimation_error = function(result) result$estimation_error
 estimation_errors = reduceResultsList(fun = estimation_error) %>% bind_rows(.id="job.id")
 estimation_errors %<>% mutate(job.id = as.numeric(job.id))
-estimation_errors %<>% mutate(job.id=ids$job.id[job.id])
 
 classification = function(result) result$classification_error
 classifications = reduceResultsList(fun = classification) %>% bind_rows(.id="job.id")
 classifications %<>% mutate(job.id = as.numeric(job.id))
-classifications %<>% mutate(job.id=ids$job.id[job.id])
 
 parameters = getJobPars() %>% unwrap()
 parameters %<>% mutate(job.id = as.numeric(job.id))

@@ -6,6 +6,9 @@ library(magrittr)
 
 # ==============================================================================
 # Setup batchtools registry
+
+setwd("/storage/work/spf5519/LSVCMM/LSVCMM-Experiments")
+env_path = "/storage/work/spf5519/LSVCMM/renv/activate.R"
 name = "experiment_snr100"
 DIR = paste0("./", name, "/")
 DIR_REGISTRY = paste0("./", name, "/registry/")
@@ -101,24 +104,27 @@ addExperiments(
 
 
 
+
 # ==============================================================================
 # Run
 summarizeExperiments()
 getStatus()
 
 resources = list(
-  account="stats_dept1",
-  partition="standard",
-  memory="10g", # this is per cpu
+  account="open",
+  partition="open",
+  memory="7g", # this is per cpu
   ncpus=1,
-  walltime="3:00:00",
+  walltime="2:00:00",
   chunks.as.arrayjobs=FALSE,
-  job_name=name
+  job_name=name,
+  env=env_path
 )
 njobs = findJobs() %>% nrow()
-chunk_df = data.table(job.id=1:njobs, chunk=1:100)
+chunk_df = data.table(job.id=1:njobs, chunk=1:n_reps)
 head(chunk_df)
 submitJobs(chunk_df, resources)
+
 # ------------------------------------------------------------------------------
 
 
@@ -139,17 +145,22 @@ registry = loadRegistry(
 DIR_RESULTS = paste0("./", name, "/results/")
 if(!dir.exists(DIR_RESULTS)) dir.create(DIR_RESULTS, recursive=T)
 
+ids = findDone()
+
 estimate = function(result) result$estimate
 estimates = reduceResultsList(fun = estimate) %>% bind_rows(.id="job.id")
 estimates %<>% mutate(job.id = as.numeric(job.id))
+estimates %<>% mutate(job.id=ids$job.id[job.id])
 
 estimation_error = function(result) result$estimation_error
 estimation_errors = reduceResultsList(fun = estimation_error) %>% bind_rows(.id="job.id")
 estimation_errors %<>% mutate(job.id = as.numeric(job.id))
+estimation_errors %<>% mutate(job.id=ids$job.id[job.id])
 
 classification = function(result) result$classification_error
 classifications = reduceResultsList(fun = classification) %>% bind_rows(.id="job.id")
 classifications %<>% mutate(job.id = as.numeric(job.id))
+classifications %<>% mutate(job.id=ids$job.id[job.id])
 
 parameters = getJobPars() %>% unwrap()
 parameters %<>% mutate(job.id = as.numeric(job.id))

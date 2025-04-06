@@ -20,25 +20,25 @@ experiments = list(
     col=2,
     transform="none",
     ref=0.1
+  ),
+  re=list(
+    dir="re_ratio100",
+    name="(c) RE size",
+    xvar="random_effect_variance_ratio",
+    xname="RE variance ratio",
+    col=3,
+    transform="sqrt",
+    ref=1.
+  ),
+  re=list(
+    dir="n100",
+    name="(d) Sample size",
+    xvar="n_subjects",
+    xname="Nb. subjects",
+    col=4,
+    transform="sqrt",
+    ref=100
   )
-  # cov=list(
-  #   dir="ar1_100",
-  #   name="(c) Cov. misspecification",
-  #   xvar="random_effect_ar1_correlation",
-  #   xname="RE AR(1) correlation",
-  #   col=3,
-  #   transform="none",
-  #   ref=1.
-  # ),
-  # re=list(
-  #   dir="re_ratio100",
-  #   name="(c) RE size",
-  #   xvar="random_effect_variance_ratio",
-  #   xname="RE variance ratio",
-  #   col=3,
-  #   transform="sqrt",
-  #   ref=1.
-  # )
 )
 
 gs = list()
@@ -62,6 +62,7 @@ for(exp in experiments){
   estimation_errors = read.csv(paste0("experiment_", exp$dir, "/results/estimation_errors.csv"))
   classifications = read.csv(paste0("experiment_", exp$dir, "/results/classifications.csv"))
   parameters = read.csv(paste0("experiment_", exp$dir, "/results/parameters.csv"))
+  print(estimates %>% dim)
 
   # patch names
   parameters$algorithm = display_names[parameters$algorithm]
@@ -109,7 +110,7 @@ for(exp in experiments){
     ) +
     scale_fill_manual(values=colors, aesthetics=c("fill", "color")) +
     ggtitle(exp$name) +
-    ylim(0, 0.4)
+    ylim(0, 0.42)
   if(exp$col>1) g = g + theme(
     axis.text.y=element_blank(),
     axis.ticks.y=element_blank(),
@@ -212,5 +213,6 @@ g = cowplot::plot_grid(
 
 gg = cowplot::plot_grid(g, glegend, ncol=1, nrow=2, rel_heights=c(10, 1))
 
-ggsave(paste0("./sim_sparse_defense.png"), gg, width=length(experiments)*3+1, height=6)
+# ggsave(paste0("./sim_sparse_defense.png"), gg, width=length(experiments)*3+1, height=6)
+ggsave(paste0("./sim_sparse.png"), gg, width=length(experiments)*3+1, height=6)
 
