@@ -3,20 +3,22 @@ library(data.table)
 library(tidyverse)
 library(magrittr)
 
+
 # ==============================================================================
 # Setup batchtools registry
 
 setwd("/storage/work/spf5519/LSVCMM/LSVCMM-Experiments")
 env_path = "/storage/work/spf5519/LSVCMM/renv/activate.R"
-name = "experiment_missing100"
+
+name = "experiment_sig10"
 DIR = paste0("./", name, "/")
 DIR_REGISTRY = paste0("./", name, "/registry/")
-if(dir.exists(DIR_REGISTRY)) unlink(DIR, recursive=T)
+if(dir.exists(DIR_REGISTRY)) unlink(DIR_REGISTRY, recursive=T)
 if(!dir.exists(DIR)) dir.create(DIR, recursive=T)
 registry = makeExperimentRegistry(
   file.dir=DIR_REGISTRY,
   seed=1,
-  packages=c("dplyr", "magrittr", "LSVCMM", "spfda")
+  packages=c("dplyr", "magrittr", "LSVCMM", "spfda", "splinectomeR", "SummarizedExperiment", "OmicsLonDA")
 )
 # ------------------------------------------------------------------------------
 
@@ -36,8 +38,19 @@ addProblem(
   data=NULL
 )
 
-# for debugging
-instance = synthetic(NULL, NULL)
+instance = synthetic(
+  NULL, NULL,
+  n_subjects=50,
+  prop_observed=0.5,
+  observation_variance=1.,
+  random_effect_ar1_correlation=1.,
+  random_effect_variance_ratio=1.,
+  effect_size=1.,
+  n_timepoints=10,
+  grpdiff_function="sine",
+  missingness="sqrt",
+  seed=1
+)
 # ------------------------------------------------------------------------------
 
 
@@ -45,23 +58,25 @@ instance = synthetic(NULL, NULL)
 
 # ==============================================================================
 # Setup algorithms
-source("./algorithms/lsvcmm.R")
-source("./algorithms/spfda.R")
+source("./algorithms/lsvcmm_boot.R")
+source("./algorithms/spfda_conf.R")
+source("./algorithms/ssanova.R")
+source("./algorithms/splines.R")
 addAlgorithm(
   name="LSVCMM",
-  fun=lsvcmm_wrapper
-)
-addAlgorithm(
-  name="LSVCMM.Independent",
-  fun=lsvcmm_wrapper
-)
-addAlgorithm(
-  name="LSVCMM.Cross-sectional",
-  fun=lsvcmm_wrapper
+  fun=lsvcmm_boot_wrapper
 )
 addAlgorithm(
   name="SPFDA",
-  fun=spfda_wrapper
+  fun=spfda_conf_wrapper
+)
+addAlgorithm(
+  name="SSANOVA",
+  fun=ssanova_wrapper
+)
+addAlgorithm(
+  name="SPLINECTOMER",
+  fun=splinectomer_wrapper
 )
 # ------------------------------------------------------------------------------
 
@@ -70,27 +85,29 @@ addAlgorithm(
 
 # ==============================================================================
 # Experimental design
-n_reps=100
+# n_reps=100
+n_reps=1
 problems = list(
   `synthetic`=CJ(
-    n_subjects=c(100),
-    prop_observed=seq(0.05, 1., 0.05),
+    # n_subjects=c(20, 30, 50, 100, 150, 200),
+    n_subjects=c(50),
+    prop_observed=0.5,
     observation_variance=1.,
     random_effect_ar1_correlation=1.,
     random_effect_variance_ratio=1.,
     effect_size=1.,
-    n_timepoints=100,
-    grpdiff_function=c("sigmoid"),
-    missingness="fixed_uniform",
+    n_timepoints=10,
+    grpdiff_function=c("sine"),
+    missingness="sqrt",
     seed=seq(n_reps)
   )
 )
 
 algorithms = list(
   `LSVCMM`=data.table(cross_sectional=F, independent=F, penalty.adaptive=0.5, kernel.scale=0.2),
-  `LSVCMM.Independent`=data.table(cross_sectional=F, independent=T, penalty.adaptive=0.5, kernel.scale=0.2),
-  `LSVCMM.Cross-sectional`=data.table(cross_sectional=T, independent=T, penalty.adaptive=0.5),
-  `SPFDA`=data.table()
+  `SPFDA`=data.table(K=12),
+  `SSANOVA`=data.table(),
+  `SPLINECTOMER`=data.table()
 )
 
 addExperiments(
@@ -103,7 +120,6 @@ addExperiments(
 
 
 
-
 # ==============================================================================
 # Run
 summarizeExperiments()
@@ -112,7 +128,7 @@ getStatus()
 resources = list(
   account="open",
   partition="open",
-  memory="14g", # this is per cpu
+  memory="7g", # this is per cpu
   ncpus=1,
   walltime="10:00:00",
   chunks.as.arrayjobs=FALSE,
@@ -144,22 +160,13 @@ registry = loadRegistry(
 DIR_RESULTS = paste0("./", name, "/results/")
 if(!dir.exists(DIR_RESULTS)) dir.create(DIR_RESULTS, recursive=T)
 
-ids = findDone()
+decision = function(result) result$decision
+decisions = reduceResultsList(fun = decision) %>% bind_rows(.id="job.id")
+decisions %<>% mutate(job.id = as.numeric(job.id))
 
-estimate = function(result) result$estimate
-estimates = reduceResultsList(fun = estimate) %>% bind_rows(.id="job.id")
-estimates %<>% mutate(job.id = as.numeric(job.id))
-estimates %<>% mutate(job.id=ids$job.id[job.id])
-
-estimation_error = function(result) result$estimation_error
-estimation_errors = reduceResultsList(fun = estimation_error) %>% bind_rows(.id="job.id")
-estimation_errors %<>% mutate(job.id = as.numeric(job.id))
-estimation_errors %<>% mutate(job.id=ids$job.id[job.id])
-
-classification = function(result) result$classification_error
+classification = function(result) result$classification
 classifications = reduceResultsList(fun = classification) %>% bind_rows(.id="job.id")
 classifications %<>% mutate(job.id = as.numeric(job.id))
-classifications %<>% mutate(job.id=ids$job.id[job.id])
 
 parameters = getJobPars() %>% unwrap()
 parameters %<>% mutate(job.id = as.numeric(job.id))
@@ -173,8 +180,7 @@ settings = reduceResultsList(fun = setting) %>% bind_rows(.id="job.id")
 settings %<>% mutate(job.id = as.numeric(job.id))
 
 write.csv(parameters, file=paste0(DIR_RESULTS, "parameters.csv"), row.names=F)
-write.csv(estimates, file=paste0(DIR_RESULTS, "estimates.csv"), row.names=F)
-write.csv(estimation_errors, file=paste0(DIR_RESULTS, "estimation_errors.csv"), row.names=F)
 write.csv(classifications, file=paste0(DIR_RESULTS, "classifications.csv"), row.names=F)
+write.csv(decisions, file=paste0(DIR_RESULTS, "decisions"), row.names=F)
 write.csv(settings, file=paste0(DIR_RESULTS, "settings.csv"), row.names=F)
 # ------------------------------------------------------------------------------

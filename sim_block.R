@@ -211,6 +211,5 @@ g = cowplot::plot_grid(
 
 gg = cowplot::plot_grid(g, glegend, ncol=1, nrow=2, rel_heights=c(10, 1))
 
-# ggsave(paste0("./sim_block_defense.png"), gg, width=length(experiments)*3+1, height=6)
-ggsave(paste0("./sim_block.png"), gg, width=length(experiments)*3+1, height=6)
+ggsave(paste0("./sim_block.pdf"), gg, width=length(experiments)*2.5+1, height=6)
 

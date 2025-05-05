@@ -21,15 +21,6 @@ experiments = list(
     transform="none",
     ref=0.5
   ),
-  # cov=list(
-  #   dir="ar1",
-  #   name="(c) Cov. misspecification",
-  #   xvar="random_effect_ar1_correlation",
-  #   xname="RE AR(1) correlation",
-  #   col=3,
-  #   transform="none",
-  #   ref=1.
-  # ),
   re=list(
     dir="re_ratio",
     name="(c) RE size",
@@ -38,6 +29,15 @@ experiments = list(
     col=3,
     transform="sqrt",
     ref=1.
+  ),
+  re=list(
+    dir="n",
+    name="(d) Sample size",
+    xvar="n_subjects",
+    xname="Nb. subjects",
+    col=4,
+    transform="sqrt",
+    ref=100
   )
 )
 
@@ -329,11 +329,11 @@ g = cowplot::plot_grid(
   byrow=F,
   align="none", axis="tblr",
   rel_widths=c(1, rep(0.9, length(experiments)-1)),
-  rel_heights=c(1, 0.8, 0.8, 0.8, 1)
+  rel_heights=c(1, 0.9, 0.9, 0.9, 1)
 )
 
 
 gg = cowplot::plot_grid(g, glegend, ncol=1, nrow=2, rel_heights=c(20, 1))
 
-ggsave(paste0("./sim_block_supp.pdf"), gg, width=length(experiments)*3+1, height=15)
+ggsave(paste0("./sim_block_supp.pdf"), gg, width=length(experiments)*2.5+1, height=12)
 

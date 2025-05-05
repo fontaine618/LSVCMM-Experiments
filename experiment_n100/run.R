@@ -3,12 +3,13 @@ library(data.table)
 library(tidyverse)
 library(magrittr)
 
+
 # ==============================================================================
 # Setup batchtools registry
 
 setwd("/storage/work/spf5519/LSVCMM/LSVCMM-Experiments")
 env_path = "/storage/work/spf5519/LSVCMM/renv/activate.R"
-name = "experiment_missing100"
+name = "experiment_n100"
 DIR = paste0("./", name, "/")
 DIR_REGISTRY = paste0("./", name, "/registry/")
 if(dir.exists(DIR_REGISTRY)) unlink(DIR, recursive=T)
@@ -36,8 +37,18 @@ addProblem(
   data=NULL
 )
 
-# for debugging
-instance = synthetic(NULL, NULL)
+# # for debugging
+instance = synthetic(NULL, NULL,
+                     n_subjects=150,
+                     prop_observed=0.1,
+                     observation_variance=1.,
+                     random_effect_ar1_correlation=1.,
+                     random_effect_variance_ratio=1.,
+                     effect_size=1.,
+                     n_timepoints=100,
+                     grpdiff_function=c("sigmoid"),
+                     missingness="fixed_uniform",
+                     seed=1)
 # ------------------------------------------------------------------------------
 
 
@@ -73,8 +84,8 @@ addAlgorithm(
 n_reps=100
 problems = list(
   `synthetic`=CJ(
-    n_subjects=c(100),
-    prop_observed=seq(0.05, 1., 0.05),
+    n_subjects=c(20, 30, 50, 100, 150, 200),
+    prop_observed=0.1,
     observation_variance=1.,
     random_effect_ar1_correlation=1.,
     random_effect_variance_ratio=1.,
@@ -103,7 +114,6 @@ addExperiments(
 
 
 
-
 # ==============================================================================
 # Run
 summarizeExperiments()
@@ -112,9 +122,9 @@ getStatus()
 resources = list(
   account="open",
   partition="open",
-  memory="14g", # this is per cpu
+  memory="7g", # this is per cpu
   ncpus=1,
-  walltime="10:00:00",
+  walltime="2:00:00",
   chunks.as.arrayjobs=FALSE,
   job_name=name,
   env=env_path
