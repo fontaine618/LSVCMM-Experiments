@@ -90,7 +90,6 @@ spfda_conf_wrapper = function(
   list(
     decision=pvals,
     classification=classification,
-    fit=out,
     time=proc.time()-t0
   )
 

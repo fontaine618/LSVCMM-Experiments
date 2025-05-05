@@ -38,7 +38,6 @@ splinectomer_wrapper = function(
   list(
     decision=pvals,
     classification=classification,
-    fit=fit,
     time=proc.time()-time0
   )
 

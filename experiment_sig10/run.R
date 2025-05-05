@@ -37,20 +37,20 @@ addProblem(
   fun=synthetic,
   data=NULL
 )
-
-instance = synthetic(
-  NULL, NULL,
-  n_subjects=50,
-  prop_observed=0.5,
-  observation_variance=1.,
-  random_effect_ar1_correlation=1.,
-  random_effect_variance_ratio=1.,
-  effect_size=1.,
-  n_timepoints=10,
-  grpdiff_function="sine",
-  missingness="sqrt",
-  seed=1
-)
+#
+# instance = synthetic(
+#   NULL, NULL,
+#   n_subjects=50,
+#   prop_observed=0.5,
+#   observation_variance=1.,
+#   random_effect_ar1_correlation=1.,
+#   random_effect_variance_ratio=1.,
+#   effect_size=1.,
+#   n_timepoints=10,
+#   grpdiff_function="sine",
+#   missingness="sqrt",
+#   seed=1
+# )
 # ------------------------------------------------------------------------------
 
 
@@ -85,12 +85,10 @@ addAlgorithm(
 
 # ==============================================================================
 # Experimental design
-# n_reps=100
-n_reps=1
+n_reps=100
 problems = list(
   `synthetic`=CJ(
-    # n_subjects=c(20, 30, 50, 100, 150, 200),
-    n_subjects=c(50),
+    n_subjects=c(20, 30, 50, 100, 150, 200),
     prop_observed=0.5,
     observation_variance=1.,
     random_effect_ar1_correlation=1.,
@@ -130,7 +128,7 @@ resources = list(
   partition="open",
   memory="7g", # this is per cpu
   ncpus=1,
-  walltime="10:00:00",
+  walltime="2:00:00",
   chunks.as.arrayjobs=FALSE,
   job_name=name,
   env=env_path
@@ -159,28 +157,22 @@ registry = loadRegistry(
 # Gather results
 DIR_RESULTS = paste0("./", name, "/results/")
 if(!dir.exists(DIR_RESULTS)) dir.create(DIR_RESULTS, recursive=T)
+ids = findDone()
 
 decision = function(result) result$decision
 decisions = reduceResultsList(fun = decision) %>% bind_rows(.id="job.id")
 decisions %<>% mutate(job.id = as.numeric(job.id))
+decisions %<>% mutate(job.id=ids$job.id[job.id])
 
 classification = function(result) result$classification
 classifications = reduceResultsList(fun = classification) %>% bind_rows(.id="job.id")
 classifications %<>% mutate(job.id = as.numeric(job.id))
+classifications %<>% mutate(job.id=ids$job.id[job.id])
 
 parameters = getJobPars() %>% unwrap()
 parameters %<>% mutate(job.id = as.numeric(job.id))
 
-setting = function(result){
-  i = which.min(result$fit$results[["ebich"]])
-  res = result$fit$results[i, ]
-  return(res)
-}
-settings = reduceResultsList(fun = setting) %>% bind_rows(.id="job.id")
-settings %<>% mutate(job.id = as.numeric(job.id))
-
 write.csv(parameters, file=paste0(DIR_RESULTS, "parameters.csv"), row.names=F)
 write.csv(classifications, file=paste0(DIR_RESULTS, "classifications.csv"), row.names=F)
-write.csv(decisions, file=paste0(DIR_RESULTS, "decisions"), row.names=F)
-write.csv(settings, file=paste0(DIR_RESULTS, "settings.csv"), row.names=F)
+write.csv(decisions, file=paste0(DIR_RESULTS, "decisions.csv"), row.names=F)
 # ------------------------------------------------------------------------------
