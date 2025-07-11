@@ -40,7 +40,10 @@ methods_display = c(
 )
 combination_display = c(
   "min"="Min",
-  "fisher"="Fisher"
+  "fisher"="Fisher",
+  "am"="Arithmetic mean",
+  "gm"="Geometric mean",
+  "hm"="Harmonic mean",
 )
 methods_colors = c(
   percentile="darkblue",
@@ -48,7 +51,10 @@ methods_colors = c(
 )
 combination_linestyle = c(
   "min"="solid",
-  "fisher"="dashed"
+  "fisher"="dashed",
+  "am"="dotted",
+  "gm"="dotdash",
+  "hm"="twodash"
 )
 xaxis_display = "Effect Size"
 yaxis_display = "Proportion positive"

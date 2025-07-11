@@ -4,13 +4,58 @@ library(magrittr)
 
 experiments = list(
   n10=list(
-    dir="sig10",
+    dir="sig10n",
     name="(a) Missing values (10 timepoints)",
     xvar="n_subjects",
     xname="Nb. subjects",
     col=1,
     transform="none",
     ref=100
+  ),
+  s10=list(
+    dir="sig10missing",
+    name="(b) Sparsity",
+    xvar="prop_observed",
+    xname="Proportion observed",
+    col=2,
+    transform="none",
+    ref=0.1
+  ),
+  re10=list(
+    dir="sig10re",
+    name="(c) RE size",
+    xvar="random_effect_variance_ratio",
+    xname="RE variance ratio",
+    col=3,
+    transform="sqrt",
+    ref=1.
+  ),
+  n100=list(
+    dir="sig100n",
+    name="(a) Missing values (10 timepoints)",
+    xvar="n_subjects",
+    xname="Nb. subjects",
+    col=4,
+    transform="none",
+    ref=100
+  ),
+  s100=list(
+    dir="sig100missing",
+    name="(b) Sparsity",
+    xvar="prop_observed",
+    xname="Proportion observed",
+    col=2,
+    transform="none",
+    ref=0.1
+  ),
+  re100=list(
+    dir="sig100re",
+    name="(c) RE size",
+    xvar="random_effect_variance_ratio",
+    xname="RE variance ratio",
+    col=5,
+    transform="sqrt",
+    ref=1.
   )
   # n100=list(
   #   dir="sig100",
@@ -111,7 +156,7 @@ for(exp in experiments){
     ) +
     ggtitle(exp$name) +
     scale_fill_manual(values=colors, aesthetics=c("fill", "color")) +
-    ylim(0., 0.3)
+    ylim(0., 0.33)
   if(exp$col>1) g = g + theme(
     axis.text.y=element_blank(),
     axis.ticks.y=element_blank(),
@@ -196,4 +241,4 @@ g = cowplot::plot_grid(
 
 gg = cowplot::plot_grid(g, glegend, ncol=1, nrow=2, rel_heights=c(10, 1))
 
-ggsave(paste0("./sim_sig.pdf"), gg, width=length(experiments)*2.5+1, height=3)
+ggsave(paste0("./sim_sig.pdf"), gg, width=length(experiments)*2.5+1, height=5)

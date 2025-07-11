@@ -1,4 +1,4 @@
-instance = LSVCMM::generate_synthetic_data(n_timepoints=10)
+# instance = LSVCMM::generate_synthetic_data(n_timepoints=10)
 
 lsvcmm_boot_wrapper = function(
     data, job, instance,

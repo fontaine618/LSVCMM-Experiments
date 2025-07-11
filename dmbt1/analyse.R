@@ -3,6 +3,7 @@ library(tidyverse)
 library(magrittr)
 library(phyloseq)
 library(shadowtext)
+library(ggrepel)
 
 
 # ==============================================================================
@@ -12,6 +13,38 @@ DIR_FIGURES = paste0("./dmbt1/figures/")
 registry = loadRegistry(file.dir=DIR)
 t0 = c(0, 4, 8, 12, 16, 22)
 tax_level = "OTU"
+# ------------------------------------------------------------------------------
+
+
+
+# ==============================================================================
+# Prepare data
+DIR_FIGURES = paste0("./dmbt1/figures/")
+source("./dmbt1/prepare_data.R") # only adds the pseq object, which is at the otu level
+if(taxa_are_rows(pseq)) pseq = t(pseq)
+prevalent_otus = microbiome::core(pseq, detection=0, prevalence=0.05) %>% phyloseq::taxa_names()
+pseq_raw = pseq
+pseq %<>% microbiome::transform(transform="clr")
+otus = pseq %>% phyloseq::taxa_names()
+pseq %<>% phyloseq::subset_taxa(otus %in% prevalent_otus)
+pseq_raw %<>% phyloseq::subset_taxa(otus %in% prevalent_otus)
+t0 = c(0, 4, 8, 12, 16, 22)
+otus = pseq %>% phyloseq::taxa_names()
+rm(prevalent_otus)
+tax = phyloseq::tax_table(pseq)
+clr = phyloseq::otu_table(pseq) %>% data.frame()
+counts = phyloseq::otu_table(pseq_raw) %>% data.frame()
+rel_abundance = counts/rowSums(counts)
+meta = phyloseq::sample_data(pseq)
+data = list(
+  clr=clr,
+  abundance=counts,
+  rel_abundance=rel_abundance,
+  tax=tax,
+  meta=meta,
+  t0=t0,
+  otus=otus
+)
 # ------------------------------------------------------------------------------
 
 
@@ -36,6 +69,7 @@ estimates %<>%
   mutate(
     da=ifelse(algo_name=="SPFDA", 1*((lower>0) | (upper<0)), da)
   )
+sig_lsvcmm = estimates %>% filter(algo_name=="LSVCMM", da>0) %>% pull(otu2) %>% unique()
 # ------------------------------------------------------------------------------
 
 
@@ -144,4 +178,34 @@ ggsave(
   paste0(DIR_FIGURES, "comparison_all.pdf"), g,
   width=6, height=8
   )
+# ------------------------------------------------------------------------------
+
+
+
+
+
+# ==============================================================================
+# Plot sparsity and mean abundance
+count_stats = data.frame(
+  otu = rel_abundance %>% colnames(),
+  mean = apply(rel_abundance, 2, mean),
+  sparsity = apply(rel_abundance, 2, function(x) sum(x==0)/length(x)),
+  prevalence = apply(rel_abundance, 2, function(x) sum(x>0)/length(x)),
+  nz_mean = apply(rel_abundance, 2, function(x) mean(x[x>0]))
+)
+
+g = ggplot() +
+  theme_minimal() +
+  geom_point(data=count_stats, aes(x=1-sparsity, y=nz_mean)) +
+  labs(x="Prevalence", y="Mean rel. abundance (non-zero)") +
+  scale_y_log10(labels=scales::percent) +
+  scale_x_continuous(labels=scales::percent, limits=c(0,1)) +
+  geom_point(data=count_stats %>% filter(otu %in% sig_lsvcmm), aes(x=1-sparsity, y=nz_mean), color="darkred") +
+  geom_label_repel(data=count_stats %>% filter(otu %in% sig_lsvcmm),
+                  aes(x=1-sparsity, y=nz_mean, label=otu), size=2, color="darkred",
+                  min.segment.length = 0, box.padding=0.5)
+ggsave(
+  paste0(DIR_FIGURES, "dmbt1_sparsity_mean.pdf"), g,
+  width=6, height=4
+)
 # ------------------------------------------------------------------------------

@@ -10,7 +10,7 @@ library(magrittr)
 setwd("/storage/work/spf5519/LSVCMM/LSVCMM-Experiments")
 env_path = "/storage/work/spf5519/LSVCMM/renv/activate.R"
 
-name = "experiment_sig10"
+name = "experiment_sig10missing"
 DIR = paste0("./", name, "/")
 DIR_REGISTRY = paste0("./", name, "/registry/")
 if(dir.exists(DIR_REGISTRY)) unlink(DIR_REGISTRY, recursive=T)
@@ -88,8 +88,8 @@ addAlgorithm(
 n_reps=100
 problems = list(
   `synthetic`=CJ(
-    n_subjects=c(20, 30, 50, 100, 150, 200),
-    prop_observed=0.5,
+    n_subjects=100,
+    prop_observed=seq(0.30, 1., 0.05),
     observation_variance=1.,
     random_effect_ar1_correlation=1.,
     random_effect_variance_ratio=1.,
@@ -102,7 +102,7 @@ problems = list(
 )
 
 algorithms = list(
-  `LSVCMM`=data.table(cross_sectional=F, independent=F, penalty.adaptive=0.5, kernel.scale=0.2),
+  `LSVCMM`=data.table(cross_sectional=F, independent=F, penalty.adaptive=0.5, kernel.scale=0.2, selection="bich"),
   `SPFDA`=data.table(K=12),
   `SSANOVA`=data.table(),
   `SPLINECTOMER`=data.table()
@@ -128,13 +128,13 @@ resources = list(
   partition="open",
   memory="7g", # this is per cpu
   ncpus=1,
-  walltime="2:00:00",
+  walltime="4:00:00",
   chunks.as.arrayjobs=FALSE,
   job_name=name,
   env=env_path
 )
 njobs = findJobs() %>% nrow()
-chunk_df = data.table(job.id=1:njobs, chunk=1:n_reps)
+chunk_df = getJobPars() %>% unwrap() %>% select(job.id, seed) %>% dplyr::rename(chunk=seed)
 head(chunk_df)
 submitJobs(chunk_df, resources)
 

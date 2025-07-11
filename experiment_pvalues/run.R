@@ -9,7 +9,7 @@ library(magrittr)
 name = "experiment_pvalues"
 DIR = paste0("./", name, "/")
 DIR_REGISTRY = paste0("./", name, "/registry/")
-if(dir.exists(DIR_REGISTRY)) unlink(DIR, recursive=T)
+if(dir.exists(DIR_REGISTRY)) unlink(DIR_REGISTRY, recursive=T)
 if(!dir.exists(DIR)) dir.create(DIR, recursive=T)
 registry = makeExperimentRegistry(
   file.dir=DIR_REGISTRY,
@@ -235,23 +235,46 @@ lsvcmm_wrapper = function(
     by="var"
   )
   bands$all_in_band = all(bands$in_band)
-  # omnibus p-values
-  fisher = function(pval) 1 - pchisq(-2*sum(log(pval)), 2*length(pval), lower.tail=TRUE)
+  # combination p-values
+  fisher = function(pval) {
+    if (any(pval <= 0)) return(NA)
+    return(1 - pchisq(-2*sum(log(pval)), 2*length(pval), lower.tail=TRUE))
+
+  }
+  amean = function(pval) mean(pval)
+  hmean = function(pval) {
+    if (any(pval <= 0)) return(NA)
+    return(exp(mean(log(pval))))
+  }
+  gmean = function(pval) {
+    if (any(pval <= 0)) return(NA)
+    return(prod(pval)^(1/length(pval)))
+  }
   omni_pvalues_pervar = bands %>% group_by(var) %>%
     summarize(
       normal_min=min(pval_normal),
       normal_fisher=fisher(pval_normal),
+      normal_am=amean(pval_normal),
+      normal_hm=hmean(pval_normal),
+      normal_gm=gmean(pval_normal),
       percentile_min=min(pval_percentile),
       percentile_fisher=fisher(pval_percentile),
-      percentile=mean(pval_joint)
+      percentile_am=amean(pval_percentile),
+      percentile_hm=hmean(pval_percentile),
+      percentile_gm=gmean(pval_percentile),
     )
   omni_pvalues = bands %>%
     summarize(
       normal_min=min(pval_normal),
       normal_fisher=fisher(pval_normal),
+      normal_am=amean(pval_normal),
+      normal_hm=hmean(pval_normal),
+      normal_gm=gmean(pval_normal),
       percentile_min=min(pval_percentile),
       percentile_fisher=fisher(pval_percentile),
-      percentile=mean(pval_joint_all)
+      percentile_am=amean(pval_percentile),
+      percentile_hm=hmean(pval_percentile),
+      percentile_gm=gmean(pval_percentile)
     )
 
   # return
@@ -367,9 +390,14 @@ omni_pvalues = pvals %>%
   summarize(
     normal_min=mean(normal_min<0.05),
     normal_fisher=mean(normal_fisher<0.05),
+    normal_am=mean(normal_am<0.05),
+    normal_hm=mean(normal_hm<0.05),
+    normal_gm=mean(normal_gm<0.05),
     percentile_min=mean(percentile_min<0.05),
     percentile_fisher=mean(percentile_fisher<0.05),
-    percentile=mean(percentile<0.05)
+    percentile_am=mean(percentile_am<0.05),
+    percentile_hm=mean(percentile_hm<0.05),
+    percentile_gm=mean(percentile_gm<0.05)
   )
 
 # p-values per variables
@@ -383,9 +411,14 @@ omni_pvalues_pervar = pvals_pervar %>%
   summarize(
     normal_min=mean(normal_min<0.05),
     normal_fisher=mean(normal_fisher<0.05),
+    normal_am=mean(normal_am<0.05),
+    normal_hm=mean(normal_hm<0.05),
+    normal_gm=mean(normal_gm<0.05),
     percentile_min=mean(percentile_min<0.05),
     percentile_fisher=mean(percentile_fisher<0.05),
-    percentile=mean(percentile<0.05)
+    percentile_am=mean(percentile_am<0.05),
+    percentile_hm=mean(percentile_hm<0.05),
+    percentile_gm=mean(percentile_gm<0.05)
   )
 
 # save
