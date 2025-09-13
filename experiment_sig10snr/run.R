@@ -10,7 +10,7 @@ library(magrittr)
 setwd("/storage/work/spf5519/LSVCMM/LSVCMM-Experiments")
 env_path = "/storage/work/spf5519/LSVCMM/renv/activate.R"
 
-name = "experiment_sig100n"
+name = "experiment_sig10snr"
 DIR = paste0("./", name, "/")
 DIR_REGISTRY = paste0("./", name, "/registry/")
 if(dir.exists(DIR_REGISTRY)) unlink(DIR_REGISTRY, recursive=T)
@@ -88,22 +88,22 @@ addAlgorithm(
 n_reps=100
 problems = list(
   `synthetic`=CJ(
-    n_subjects=c(20, 30, 50, 100, 150, 200),
-    prop_observed=0.1,
-    observation_variance=1.,
+    n_subjects=100,
+    prop_observed=0.5,
+    observation_variance=seq(0.2, 2, length.out=10)^2,
     random_effect_ar1_correlation=1.,
     random_effect_variance_ratio=1.,
     effect_size=1.,
-    n_timepoints=100,
-    grpdiff_function=c("sigmoid"),
-    missingness="fixed_uniform",
+    n_timepoints=10,
+    grpdiff_function=c("sine"),
+    missingness="sqrt",
     seed=seq(n_reps)
   )
 )
 
 algorithms = list(
   `LSVCMM`=data.table(cross_sectional=F, independent=F, penalty.adaptive=0.5, kernel.scale=0.2, selection="bich"),
-  `SPFDA`=data.table(),
+  `SPFDA`=data.table(K=12),
   `SSANOVA`=data.table(),
   `SPLINECTOMER`=data.table()
 )
@@ -128,7 +128,7 @@ resources = list(
   partition="open",
   memory="7g", # this is per cpu
   ncpus=1,
-  walltime="10:00:00",
+  walltime="2:00:00",
   chunks.as.arrayjobs=FALSE,
   job_name=name,
   env=env_path

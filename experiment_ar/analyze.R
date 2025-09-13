@@ -139,4 +139,4 @@ for(col in seq_along(experiments)){
 }
 
 g = cowplot::plot_grid(plotlist=gs, ncol=length(experiments), byrow=F, align="v")
-ggsave("sim_ar.pdf", g, width=10, height=6)
+ggsave("experiment_ar/sim_ar.pdf", g, width=10, height=6)

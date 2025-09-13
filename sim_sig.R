@@ -5,11 +5,11 @@ library(magrittr)
 experiments = list(
   n10=list(
     dir="sig10n",
-    name="(a) Missing values (10 timepoints)",
+    name="(a) Sample size",
     xvar="n_subjects",
     xname="Nb. subjects",
     col=1,
-    transform="none",
+    transform="sqrt",
     ref=100
   ),
   s10=list(
@@ -19,7 +19,7 @@ experiments = list(
     xname="Proportion observed",
     col=2,
     transform="none",
-    ref=0.1
+    ref=0.5
   ),
   re10=list(
     dir="sig10re",
@@ -29,43 +29,7 @@ experiments = list(
     col=3,
     transform="sqrt",
     ref=1.
-  ),
-  n100=list(
-    dir="sig100n",
-    name="(a) Missing values (10 timepoints)",
-    xvar="n_subjects",
-    xname="Nb. subjects",
-    col=4,
-    transform="none",
-    ref=100
-  ),
-  s100=list(
-    dir="sig100missing",
-    name="(b) Sparsity",
-    xvar="prop_observed",
-    xname="Proportion observed",
-    col=2,
-    transform="none",
-    ref=0.1
-  ),
-  re100=list(
-    dir="sig100re",
-    name="(c) RE size",
-    xvar="random_effect_variance_ratio",
-    xname="RE variance ratio",
-    col=5,
-    transform="sqrt",
-    ref=1.
   )
-  # n100=list(
-  #   dir="sig100",
-  #   name="(b) Irregular sampling (100 timepoints)",
-  #   xvar="n_subjects",
-  #   xname="Nb. subjects",
-  #   col=1,
-  #   transform="none",
-  #   ref=100
-  # )
 )
 
 gs = list()
@@ -156,7 +120,7 @@ for(exp in experiments){
     ) +
     ggtitle(exp$name) +
     scale_fill_manual(values=colors, aesthetics=c("fill", "color")) +
-    ylim(0., 0.33)
+    ylim(0., 0.15)
   if(exp$col>1) g = g + theme(
     axis.text.y=element_blank(),
     axis.ticks.y=element_blank(),
